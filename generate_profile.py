@@ -28,13 +28,7 @@ XML_TEMPLATE = """<?xml version="1.0"?>
 </WLANProfile>
 """
 
-def generate_wifi_xml(ssid, password, filename=None):
-    out_dir = "../MASTER-DASH/wifi/"
-    os.makedirs(out_dir, exist_ok=True)  
-    if filename is None:
-        filename = f"{ssid}.xml"
-    filepath = os.path.join(out_dir, filename)
-
+def generate_wifi_xml(ssid, password, filepath): 
     xml_content = XML_TEMPLATE.format(ssid=ssid, password=password)
     with open(filepath, "w") as f:
         f.write(xml_content)

@@ -40,15 +40,15 @@ def connect_wifi(operating, ssid, password, expected_ip):
     # windows
     elif operating == "Windows":
         if validate_ip_win(ssid, expected_ip):
-            print(Colors.yellow("Already connected to {ssid}"))
+            print(Colors.yellow(f"Already connected to {ssid}"))
             return True
         
-        xml_dir = "../MASTER-DASH/wifi/"
+        xml_dir = Wifi.XML_WIN
         filename = f"{ssid}.xml"
         xml_path = os.path.join(xml_dir, filename)
         if not os.path.exists(xml_path):
             print(Colors.red(f"Wi-Fi profile not found: {xml_path}. Generating..."))
-            generate_wifi_xml(ssid, password)
+            generate_wifi_xml(ssid, password, xml_path)
         run(["netsh", "wlan", "add", "profile", f"filename={xml_path}"])
 
         for i in range(3):
