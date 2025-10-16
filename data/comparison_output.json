@@ -1,0 +1,144 @@
+{
+    "controllers": {
+      "combined_state_controller.py": {
+        "status": 0,
+        "missing": [
+          "Motor:right.hip=id_missing(req:43)",
+          "Motor:right.knee=id_missing(req:42)",
+          "Motor:left.hip=id_missing(req:33)",
+          "Motor:left.knee=id_missing(req:32)"
+        ]
+      },
+      "exo_controller_daniel.py": {
+        "status": 1,
+        "missing": []
+      },
+      "exo_controller_daniel_debug.py": {
+        "status": 1,
+        "missing": []
+      },
+      "hike_controller.py": {
+        "status": 0,
+        "missing": [
+          "Motor:right.hip=id_missing(req:43)",
+          "Motor:right.knee=id_missing(req:42)",
+          "Motor:left.hip=id_missing(req:33)",
+          "Motor:left.knee=id_missing(req:32)"
+        ]
+      },
+      "hip_controller_COMBINED.py": {
+        "status": 0,
+        "missing": [
+          "IMU:pelvis=id_missing(req:154135)",
+          "IMU:right.thigh=id_missing(req:154137)",
+          "IMU:right.shank=id_missing(req:154136)",
+          "IMU:left.thigh=id_missing(req:156123)",
+          "IMU:left.shank=id_missing(req:154138)"
+        ]
+      },
+      "hip_controller_COMBINED_flexible_devices.py": {
+        "status": 0,
+        "missing": [
+          "Motors=count_insufficient(req:5, got:2)"
+        ]
+      },
+      "hip_controller_COMBINED_noinsole.py": {
+        "status": 0,
+        "missing": [
+          "IMU:pelvis=id_missing(req:154135)",
+          "IMU:right.thigh=id_missing(req:154137)",
+          "IMU:right.shank=id_missing(req:154136)",
+          "IMU:left.thigh=id_missing(req:156123)",
+          "IMU:left.shank=id_missing(req:154138)"
+        ]
+      },
+      "hip_controller_COMBINED_noinsole_BO.py": {
+        "status": 1,
+        "missing": []
+      },
+      "hip_controller_COMBINED_noinsole_BO_v2.py": {
+        "status": 1,
+        "missing": []
+      },
+      "hip_controller_COMBINED_noinsole_BO_v3.py": {
+        "status": 0,
+        "missing": [
+          "IMU:right.shank=id_missing(req:154136)",
+          "IMU:left.thigh=id_missing(req:193830)"
+        ]
+      },
+      "hip_controller_COMBINED_noinsole_BO_v4.py": {
+        "status": 0,
+        "missing": [
+          "IMU:pelvis=id_missing(req:154135)",
+          "IMU:right.thigh=id_missing(req:154137)",
+          "IMU:right.shank=id_missing(req:154136)",
+          "IMU:left.thigh=id_missing(req:154134)",
+          "IMU:left.shank=id_missing(req:154138)"
+        ]
+      },
+      "hip_controller_COMBINED_noinsole_BO_v5.py": {
+        "status": 0,
+        "missing": [
+          "IMU:pelvis=id_missing(req:154135)",
+          "IMU:right.thigh=id_missing(req:154137)",
+          "IMU:right.shank=id_missing(req:154136)",
+          "IMU:left.thigh=id_missing(req:154134)",
+          "IMU:left.shank=id_missing(req:154138)"
+        ]
+      },
+      "hip_controller_COMBINED_noinsole_BO_v6.py": {
+        "status": 0,
+        "missing": [
+          "IMU:pelvis=id_missing(req:154135)",
+          "IMU:right.thigh=id_missing(req:154137)",
+          "IMU:right.shank=id_missing(req:154136)",
+          "IMU:left.thigh=id_missing(req:193821)",
+          "IMU:left.shank=id_missing(req:134959)"
+        ]
+      },
+      "hip_controller_COMBINED_noinsole_BO_v7.py": {
+        "status": 0,
+        "missing": [
+          "IMU:pelvis=id_missing(req:154135)",
+          "IMU:left.thigh=id_missing(req:193830)",
+          "IMU:left.shank=id_missing(req:193820)"
+        ]
+      },
+      "hip_controller_KEYA.py": {
+        "status": 1,
+        "missing": []
+      },
+      "hip_controller_KEYA_new.py": {
+        "status": 1,
+        "missing": []
+      },
+      "hip_controller_noback-xs.py": {
+        "status": 1,
+        "missing": []
+      },
+      "hip_controller_noback.py": {
+        "status": 1,
+        "missing": []
+      },
+      "model_comparison_controller.py": {
+        "status": 0,
+        "missing": [
+          "Motor:right.hip=id_missing(req:43)",
+          "Motor:right.knee=id_missing(req:42)",
+          "Motor:left.hip=id_missing(req:33)",
+          "Motor:left.knee=id_missing(req:32)"
+        ]
+      },
+      "prueba.py": {
+        "status": 1,
+        "missing": []
+      }
+    },
+    "summary": {
+      "ready": 9,
+      "blocked": 11,
+      "unknown": 0,
+      "timestamp": "2025-10-11 00:00:40"
+    }
+  }

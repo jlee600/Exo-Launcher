@@ -4,64 +4,82 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>EPIC Controller Dashboard</title>
+
 <style>
-  :root{
-    --bg:#f9fafb; --fg:#111827; --muted:#6b7280;
-    --green:#10b981; --green-100:#d1fae5;
-    --red:#ef4444; --red-100:#fee2e2;
-    --gray:#9ca3af; --gray-100:#f3f4f6;
-    --card:#ffffff; --border:#e5e7eb;
-    --blue:#2563eb; --blue-100:#dbeafe;
+  :root {
+    --bg: #f9fafb;
+    --fg: #111827;
+    --muted: #6b7280;
+    --green: #10b981;
+    --green-100: #d1fae5;
+    --red: #ef4444;
+    --red-100: #fee2e2;
+    --gray: #9ca3af;
+    --gray-100: #f3f4f6;
+    --card: #ffffff;
+    --border: #e5e7eb;
   }
-  *{box-sizing:border-box}
-  body{
-    margin:24px; background:var(--bg); color:var(--fg);
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 24px;
+    background: var(--bg);
+    color: var(--fg);
     font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   }
-  header{margin-bottom:18px}
-  h1{font-size:20px; margin:0 0 8px}
-  .legend{ margin:10px 0 6px; display:flex; gap:10px; flex-wrap:wrap; }
-  .dot{ width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:6px; vertical-align:-1px }
-  .lg{ display:flex; align-items:center; gap:6px; color:var(--muted); font-size:12px}
-  .dot-green{ background:var(--green) } .dot-red{ background:var(--red) } .dot-gray{ background:var(--gray) }
 
-  .grid{
-    display:grid; gap:12px;
-    grid-template-columns: repeat(4, minmax(0,1fr));
-  }
-  .card{
-    position:relative;
-    background:var(--card); border:1px solid var(--border);
-    border-radius:10px; padding:12px; min-height:90px;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    text-align:center; font-size:14px; line-height:1.3;
-  }
-  .ready{ background:var(--green-100); border-color:var(--green); }
-  .blocked{ background:var(--red-100); border-color:var(--red); }
-  .unknown{ background:var(--gray-100); border-color:var(--gray); }
+  /* Header */
+  header { margin-bottom: 18px; }
+  h1 { font-size: 20px; margin: 0 0 8px; }
 
-  /* Run button */
-  .btn{
-    margin-top:8px; padding:4px 12px;
-    font-size:12px; border:none; border-radius:6px;
-    cursor:pointer; font-weight:500;
+  .legend {
+    margin: 10px 0 6px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
   }
-  .btn-run{
-    background:var(--blue-100); color:var(--blue);
+
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: -1px; }
+  .lg { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+  .dot-green { background: var(--green); } .dot-red { background: var(--red); } .dot-gray { background: var(--gray); }
+
+  /* Controller Grid */
+  .grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
-  .btn-run:hover{ background:var(--blue); color:#fff; }
-  .btn-disabled{
-    background:var(--gray-100); color:var(--muted); cursor:not-allowed;
+
+  .card {
+    position: relative;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 14px;
   }
+
+  .ready { background: var(--green-100); border-color: var(--green); }
+  .blocked { background: var(--red-100); border-color: var(--red); }
+  .unknown { background: var(--gray-100); border-color: var(--gray); }
+
+  .name { font-weight: 500; }
 
   /* Tooltip */
-  .card.blocked[data-missing]:hover::after{
+  .card[data-missing]:hover::after {
     content: attr(data-missing);
     position: absolute;
     left: 50%;
     bottom: calc(100% + 10px);
     transform: translateX(-50%);
-    max-width: 480px;
+    max-width: 520px;
     background: #111827;
     color: #fff;
     padding: 12px 14px;
@@ -69,11 +87,11 @@
     line-height: 1.45;
     border-radius: 10px;
     white-space: pre-wrap;
-    word-break: break-word;
-    box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
     z-index: 20;
   }
-  .card.blocked[data-missing]:hover::before{
+
+  .card[data-missing]:hover::before {
     content: "";
     position: absolute;
     left: 50%;
@@ -83,120 +101,216 @@
     border-top-color: #111827;
   }
 
-  footer{
-    margin-top:22px; padding-top:16px; border-top:1px solid var(--border);
-  }
-  .footer-grid{
-    display:grid; gap:16px;
-    grid-template-columns: repeat(3, minmax(0,1fr));
-  }
-  .section{
-    background:var(--card); border:1px solid var(--border);
-    border-radius:10px; padding:14px;
-  }
-  .section h3{
-    margin:0 0 10px; font-size:14px; color:var(--muted); font-weight:600;
-    text-transform:uppercase; letter-spacing:.02em;
-  }
-  table{ width:100%; border-collapse:collapse; font-size:13px }
-  th, td{ padding:6px 8px; border-bottom:1px solid var(--border); text-align:left }
-  th{ color:var(--muted); font-weight:600 }
-  .pill{
-    display:inline-block; padding:2px 8px; border-radius:999px;
-    font-size:12px; background:var(--gray-100); color:var(--muted);
+  /* Buttons */
+  .btn {
+    margin-top: 8px;
+    padding: 4px 12px;
+    font-size: 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
   }
 
-  @media (max-width: 980px){ .grid{grid-template-columns: repeat(3,1fr)} }
-  @media (max-width: 720px){ .grid{grid-template-columns: repeat(2,1fr)} .footer-grid{grid-template-columns:1fr} }
+  .btn-run { background: #dbeafe; color: #2563eb; }
+  .btn-run:hover { background: #2563eb; color: white; }
+  .btn-disabled { background: var(--gray-100); color: var(--muted); cursor: not-allowed; }
+
+  /* Footer Layout */
+  footer {
+    margin-top: 24px;
+    padding-top: 16px;
+  }
+
+  .footer-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+
+  .section h3 {
+    margin: 0 0 10px;
+    font-size: 14px;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+  }
+  
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; }
+  th { color: var(--muted); font-weight: 600; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; background: var(--gray-100); color: var(--muted); }
+
+  @media (max-width: 980px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 720px) { .grid { grid-template-columns: repeat(2, 1fr); } .footer-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
+
 <body>
-  <header>
-    <h1>EPIC Controller Dashboard</h1>
-    <div class="legend">
-      <span class="lg"><span class="dot dot-green"></span>READY</span>
-      <span class="lg"><span class="dot dot-red"></span>BLOCKED</span>
-      <span class="lg"><span class="dot dot-gray"></span>UNKNOWN</span>
+
+<header>
+  <h1>EPIC Controller Dashboard</h1>
+  <div class="legend">
+    <span class="lg"><span class="dot dot-green"></span>READY</span>
+    <span class="lg"><span class="dot dot-red"></span>BLOCKED</span>
+    <span class="lg"><span class="dot dot-gray"></span>UNKNOWN</span>
+  </div>
+</header>
+
+<!-- Controller Grid -->
+<section id="grid" class="grid"></section>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-grid">
+
+    <!-- SENSORS -->
+    <div class="section">
+      <h3>SENSORS</h3>
+      <table id="sensor-table">
+        <thead>
+          <tr><th>Device ID</th><th>Type</th><th>Status</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
-  </header>
 
-  <!-- CONTROLLERS GRID -->
-  <section class="grid">
-    <div class="card ready">combined_state_controller.py <button class="btn btn-run">Run</button></div>
-    <div class="card ready">hip_controller_COMBINED.py <button class="btn btn-run">Run</button></div>
-    <div class="card blocked">exo_controller_daniel.py <button class="btn btn-disabled">Run</button></div>
-    <div class="card blocked">exo_controller_daniel_debug.py <button class="btn btn-disabled">Run</button></div>
-    <div class="card blocked">hike_controller.py <button class="btn btn-disabled">Run</button></div>
-    <div class="card blocked">hip_controller_COMBINED_noinsole.py <button class="btn btn-disabled">Run</button></div>
-    <div class="card blocked">hip_controller_COMBINED_noinsole_BO.py <button class="btn btn-disabled">Run</button></div>
-    <div class="card blocked">hip_controller_COMBINED_noinsole_BO_v2.py <button class="btn btn-disabled">Run</button></div>
-    <div class="card blocked">hip_controller_COMBINED_noinsole_BO_v3.py <button class="btn btn-disabled">Run</button></div>
-    <div class="card blocked">hip_controller_COMBINED_noinsole_BO_v4.py <button class="btn btn-disabled">Run</button></div>
-    <div class="card blocked">hip_controller_COMBINED_noinsole_BO_v5.py <button class="btn btn-disabled">Run</button></div>
-    <div class="card blocked">hip_controller_COMBINED_noinsole_BO_v6.py <button class="btn btn-disabled">Run</button></div>
-    <div class="card blocked">hip_controller_COMBINED_noinsole_BO_v7.py <button class="btn btn-disabled">Run</button></div>
-    <div class="card blocked"
-      data-missing="• IMU: left.thigh — id mismatch
-• IMU: right.shank — missing
-• Xsensors — required but unavailable
-• Motor: right.hip — missing">
-      hip_controller_KEYA.py <button class="btn btn-disabled">Run</button>
+    <!-- ACTUATORS -->
+    <div class="section">
+      <h3>ACTUATORS</h3>
+      <table id="motor-table">
+        <thead>
+          <tr><th>Motor ID</th><th>Type</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
-    <div class="card blocked">hip_controller_KEYA_new.py <button class="btn btn-disabled">Run</button></div>
-    <div class="card blocked">hip_controller_noback.py <button class="btn btn-disabled">Run</button></div>
-    <div class="card blocked">hip_controller_noback-xs.py <button class="btn btn-disabled">Run</button></div>
-    <div class="card blocked">prueba.py <button class="btn btn-disabled">Run</button></div>
-    <div class="card unknown">model_comparison_controller.py <button class="btn btn-disabled">Run</button></div>
-    <div class="card unknown">bayesian_autom.py <button class="btn btn-disabled">Run</button></div>
-    <div class="card unknown">hip_offline_COMBINED_FINAL.py <button class="btn btn-disabled">Run</button></div>
-    <div class="card unknown">hip_offline_HipTorque_FINAL.py <button class="btn btn-disabled">Run</button></div>
-    <div class="card unknown">hip_offline_PowAng_FINAL.py <button class="btn btn-disabled">Run</button></div>
-  </section>
 
-  <!-- FOOTER -->
-  <footer>
-    <div class="footer-grid">
-      <!-- SENSORS -->
-      <div class="section">
-        <h3>SENSORS</h3>
-        <table>
-          <thead><tr><th>Device ID</th><th>Type</th><th>Status</th></tr></thead>
-          <tbody>
-            <tr><td>154141</td><td>IMU</td><td><span class="pill">connected</span></td></tr>
-            <tr><td>154140</td><td>IMU</td><td><span class="pill">connected</span></td></tr>
-            <tr><td>156124</td><td>IMU</td><td><span class="pill">connected</span></td></tr>
-            <tr><td>156125</td><td>IMU</td><td><span class="pill">connected</span></td></tr>
-            <tr><td>156122</td><td>IMU</td><td><span class="pill">connected</span></td></tr>
-            <tr><td>SN813287000058-WSPK4-S00539-R06</td><td>Insole</td><td><span class="pill">connected</span></td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- MOTORS -->
-      <div class="section">
-        <h3>ACTUATORS</h3>
-        <table>
-          <thead><tr><th>Motor ID</th><th>Type</th></tr></thead>
-          <tbody>
-            <tr><td>4</td><td>AK80-9</td></tr>
-            <tr><td>2</td><td>AK80-9</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- SUMMARY -->
-      <div class="section">
-        <h3>SUMMARY</h3>
-        <table>
-          <tbody>
-            <tr><td>Jetson Host</td><td><span class="pill">Sully: 192.168.50.220</span></td></tr>
-            <tr><td>Xsensors</td><td><span class="pill">ON</span></td></tr>
-            <tr><td>Wi-Fi</td><td><span class="pill">CAREN_5G</span></td></tr>
-            <tr><td>Last updated</td><td><span class="pill">5 seconds ago</span></td></tr>
-          </tbody>
-        </table>
-      </div>
+    <!-- SUMMARY -->
+    <div class="section">
+      <h3>SUMMARY</h3>
+      <table>
+        <tbody>
+          <tr><td>Jetson Host</td><td><span class="pill" id="sum-host">—</span></td></tr>
+          <tr><td>Xsensors</td><td><span class="pill" id="sum-xsens">—</span></td></tr>
+          <tr><td>Wi-Fi</td><td><span class="pill" id="sum-wifi">—</span></td></tr>
+          <tr><td>Last updated</td><td><span class="pill" id="sum-ts">—</span></td></tr>
+        </tbody>
+      </table>
     </div>
-  </footer>
+
+  </div>
+</footer>
+
+<script>
+  const OUTPUT_URL = './data/comparison_output.json';
+  const META_URL = './data/meta.json';
+  const INFO_URL = './data/dash_info.json';
+  const REFRESH_MS = 5000;
+
+  function statusClass(s) {
+    if (s === 1) return 'ready';
+    if (s === 0) return 'blocked';
+    return 'unknown';
+  }
+
+  function buildCard(name, data) {
+    const card = document.createElement('div');
+    card.className = `card ${statusClass(data.status)}`;
+    if (Array.isArray(data.missing) && data.missing.length) {
+      const lines = data.missing.map(m => '• ' + m).join('\n');
+      card.setAttribute('data-missing', lines);
+    }
+
+    const title = document.createElement('div');
+    title.className = 'name';
+    title.textContent = name;
+    card.appendChild(title);
+
+    const btn = document.createElement('button');
+    btn.textContent = 'Run';
+    if (data.status === 1) {
+      btn.className = 'btn btn-run';
+      btn.onclick = () => alert(`(Demo) Would launch: ${name}`);
+    } else {
+      btn.className = 'btn btn-disabled';
+      btn.disabled = true;
+    }
+    card.appendChild(btn);
+
+    return card;
+  }
+
+  async function fetchJSON(url) {
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+    return res.json();
+  }
+
+  // Update dashboard grid + footer
+  async function loadAll() {
+    try {
+      const [cmp, meta, info] = await Promise.all([
+        fetchJSON(OUTPUT_URL),
+        fetchJSON(META_URL),
+        fetchJSON(INFO_URL)
+      ]);
+
+      // --- Update controller grid ---
+      const grid = document.getElementById('grid');
+      const frag = document.createDocumentFragment();
+      Object.entries(cmp.controllers).forEach(([name, data]) => {
+        frag.appendChild(buildCard(name, data));
+      });
+      grid.replaceChildren(frag);
+
+      // --- Update sensor table ---
+      const sensorTbody = document.querySelector('#sensor-table tbody');
+      sensorTbody.innerHTML = '';
+      (meta.IMUs || []).forEach(id => {
+        sensorTbody.insertAdjacentHTML('beforeend', `
+          <tr><td>${id}</td><td>IMU</td><td><span class="pill">connected</span></td></tr>
+        `);
+      });
+      if (meta.Xsensors) {
+        sensorTbody.insertAdjacentHTML('beforeend', `
+          <tr><td>(Xsensor)</td><td>Insole</td><td><span class="pill">connected</span></td></tr>
+        `);
+      }
+
+      // --- Update motor table ---
+      const motorTbody = document.querySelector('#motor-table tbody');
+      motorTbody.innerHTML = '';
+      const ids = meta.Motors?.["motor-id"] || [];
+      const types = meta.Motors?.["motor-types"] || [];
+      ids.forEach((id, i) => {
+        const type = types[i] || types[0] || '-';
+        motorTbody.insertAdjacentHTML('beforeend', `<tr><td>${id}</td><td>${type}</td></tr>`);
+      });
+
+      // --- Summary ---
+      document.getElementById('sum-host').textContent = info.JetsonHost;
+      document.getElementById('sum-wifi').textContent = info.WiFi;
+      document.getElementById('sum-xsens').textContent = meta.Xsensors ? "ON" : "OFF";
+      document.getElementById('sum-ts').textContent = cmp.summary.timestamp || "—";
+
+    } catch (err) {
+      console.error("Dashboard update failed:", err);
+    }
+  }
+
+  loadAll();
+  setInterval(loadAll, REFRESH_MS);
+</script>
+
 </body>
 </html>

@@ -1,5 +1,5 @@
 import os, subprocess, sys, socket, platform, json
-from config import Wifi, Jetson, Remote_Paths, Colors
+from config import Wifi, Jetson, Remote_Paths, Local_Paths,Colors
 from generate_profile import generate_wifi_xml
 
 def run(cmd):
@@ -43,7 +43,7 @@ def connect_wifi(operating, ssid, password, expected_ip):
             print(Colors.yellow(f"Already connected to {ssid}"))
             return True
         
-        xml_dir = Wifi.XML_WIN
+        xml_dir = Local_Paths.ROOT
         filename = f"{ssid}.xml"
         xml_path = os.path.join(xml_dir, filename)
         if not os.path.exists(xml_path):
@@ -107,6 +107,26 @@ def ssh_and_validate(user, host):
     print(Colors.red("Failed to SSH into Jetson or run comparison after few attempts."))
     return False, None
 
+def scp_from_jetson(user, host, remote, local):
+    os.makedirs(os.path.dirname(local), exist_ok=True)
+    r = run(["scp", "-q", "-o", "StrictHostKeyChecking=accept-new", f"{user}@{host}:{remote}", local])
+    if r.returncode != 0:
+        print(Colors.red(f"SCP failed for {remote} -> {local}\n{r.stderr}"))
+    else:
+        print(Colors.green(f"Copied {remote} -> {local}"))
+    return r.returncode == 0
+
+def write_dashboard_info(user):
+    dashboard_info = {
+        "JetsonHost": f"{user}: {Jetson.HOST_SULLY}",
+        "WiFi": Wifi.SSID_CAREN,
+    }
+    out_dir = Local_Paths.DATA_DIR
+    os.makedirs(out_dir, exist_ok=True)
+    with open(os.path.join(out_dir, "dash_info.json"), "w") as f:
+        json.dump(dashboard_info, f, indent=2)
+    print("[INFO] Dashboard info written.")
+
 def main():
     sys_os = platform.system()
     _os = "Mac" if sys_os == "Darwin" else sys_os
@@ -125,10 +145,17 @@ def main():
     if not ok:
         sys.exit(1)
 
-    summary = (payload or {}).get("summary", {})
-    print(Colors.yellow("\n=== Local summary (from comparison_output.json) ==="))
-    print(f"Ready: {summary.get('ready', 0)}  |  Blocked: {summary.get('blocked', 0)}  |  Unknown: {summary.get('unknown', 0)}")
-    print(f"Timestamp: {summary.get('timestamp', 'n/a')}")
+    # output
+    print(Colors.green("\nSyncing results to laptop..."))
+    write_dashboard_info(Jetson.USER_SULLY)
+    ok1 = scp_from_jetson(Jetson.USER_SULLY, Jetson.HOST_SULLY, Remote_Paths.OUTPUT, Local_Paths.OUTPUT)
+    ok2 = scp_from_jetson(Jetson.USER_SULLY, Jetson.HOST_SULLY, Remote_Paths.META_PATH, Local_Paths.META)
+
+    if not (ok1 and ok2):
+        print(Colors.red("Sync incomplete — dashboard may not reflect latest data."))
+    else:
+        print(Colors.green("Sync complete."))
+    
     # print("\nAll operations completed successfully.")
 
 if __name__ == "__main__":

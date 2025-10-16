@@ -1,0 +1,8 @@
+{ 
+    "IMUs": [154141, 154140, 156124, 156125, 156122],
+    "Xsensors": true,
+    "Motors": {
+                "motor-id" : [4, 2],                 
+                "motor-types" : ["AK80-9"]          
+            }
+}
