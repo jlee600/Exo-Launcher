@@ -1,6 +1,6 @@
-import os, socket, json, time
-from config import Remote_Paths,Colors
-from util.utils import run, write_json
+import os, socket, json, time, datetime
+from config import Remote_Paths, Colors
+from util.utils import run, write_json, write_dashboard_info
 from config import Local_Paths
 
 ##############################
@@ -76,6 +76,7 @@ def batch_compare_and_pull(user, host):
 
     out = r.stdout or ""
     try:
+        write_dashboard_info(user, host)
         _, after_cmp = out.split(BEGIN_CMP, 1)
         cmp_json_str, after_meta = after_cmp.split(BEGIN_META, 1)
         cmp_json_str = cmp_json_str.strip()
@@ -102,8 +103,10 @@ def periodic_sync(user, host, interval_sec=5):
         if cmp_payload and meta_payload:
             write_json(Local_Paths.OUTPUT, cmp_payload)
             write_json(Local_Paths.META, meta_payload)
-            print(Colors.green("[SYNC] Updated comparison_output.json and meta.json"))
+            
+            curr = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            print(Colors.green(f"[SYNC {curr}] Updated comparison_output.json and meta.json"))
         else:
-            print(Colors.red("[SYNC] Update failed"))
+            print(Colors.red(f"[SYNC {curr}] Update failed"))
 
         time.sleep(interval_sec)

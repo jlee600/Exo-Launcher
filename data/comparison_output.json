@@ -3,8 +3,6 @@
     "combined_state_controller.py": {
       "status": 0,
       "missing": [
-        "Motor:right.hip=id_missing(req:43)",
-        "Motor:right.knee=id_missing(req:42)",
         "Motor:left.hip=id_missing(req:33)",
         "Motor:left.knee=id_missing(req:32)"
       ]
@@ -20,8 +18,6 @@
     "hike_controller.py": {
       "status": 0,
       "missing": [
-        "Motor:right.hip=id_missing(req:43)",
-        "Motor:right.knee=id_missing(req:42)",
         "Motor:left.hip=id_missing(req:33)",
         "Motor:left.knee=id_missing(req:32)"
       ]
@@ -38,7 +34,7 @@
     "hip_controller_COMBINED_flexible_devices.py": {
       "status": 0,
       "missing": [
-        "Motors=count_insufficient(req:5, got:2)"
+        "Motors=count_insufficient(req:5, got:4)"
       ]
     },
     "hip_controller_COMBINED_noinsole.py": {
@@ -118,8 +114,6 @@
     "model_comparison_controller.py": {
       "status": 0,
       "missing": [
-        "Motor:right.hip=id_missing(req:43)",
-        "Motor:right.knee=id_missing(req:42)",
         "Motor:left.hip=id_missing(req:33)",
         "Motor:left.knee=id_missing(req:32)"
       ]
@@ -132,7 +126,6 @@
   "summary": {
     "ready": 9,
     "blocked": 11,
-    "unknown": 0,
-    "timestamp": "2025-10-20 14:42:30"
+    "unknown": 0
   }
 }

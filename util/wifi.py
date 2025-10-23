@@ -67,6 +67,7 @@ def connect_wifi(operating, ssid, password, expected_ip):
             run(["networksetup", "-setairportnetwork", Wifi.DEV_MAC, ssid, password])
             
             if validate_ip_mac(ssid, expected_ip):
+                print(Colors.yellow(f"[WIFI] Connected to {ssid}"))
                 return True
     # windows
     elif operating == "Windows":
@@ -78,7 +79,7 @@ def connect_wifi(operating, ssid, password, expected_ip):
         filename = f"{ssid}.xml"
         xml_path = os.path.join(xml_dir, filename)
         if not os.path.exists(xml_path):
-            print(Colors.red(f"[WIFI] profile not found: {xml_path}. Generating..."))
+            print(Colors.yellow(f"[WIFI] profile not found: {xml_path}. Generating..."))
             generate_wifi_xml(ssid, password, xml_path)
         run(["netsh", "wlan", "add", "profile", f"filename={xml_path}"])
 

@@ -456,12 +456,10 @@
         // 2. Sensors 
         const sBody = document.querySelector('#sensor-table tbody');
         const imus = (meta.IMUs || []).map(id => ({ id, type: 'IMU' }));
-        if (meta.Xsensors) {
-          imus.push({ id: 'xsens', type: 'Insole' });
-        }
+        
         const sensorHtml = (item, id) => 
           `<tr data-id="${id}">
-             <td>${item.id === 'xsens' ? '(Xsensor)' : item.id}</td>
+             <td>${item.id}</td>
              <td>${item.type}</td>
              <td><span class="pill">connected</span></td>
            </tr>`;
@@ -482,11 +480,10 @@
         updateTable(mBody, motors, motorHtml, 'id');
   
         // 4. Summary 
+        updateText(document.getElementById('sum-ts'), info.LastUpdated || '—');
         updateText(document.getElementById('sum-host'), info.JetsonHost || '—');
         updateText(document.getElementById('sum-wifi'), info.WiFi || '—');
-        updateText(document.getElementById('sum-xsens'), meta.Xsensors ? 'ON' : 'OFF');
-        updateText(document.getElementById('sum-ts'), (cmp.summary?.timestamp) || '—');
-  
+        updateText(document.getElementById('sum-xsens'), meta.Xsensors ? 'ON' : 'OFF');  
         setBadge('ok','Live');
       } catch (e){
         console.error('Dashboard update failed:', e);

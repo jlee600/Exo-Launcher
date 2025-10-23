@@ -1,4 +1,4 @@
-import os, subprocess, json
+import os, subprocess, json, datetime
 from config import Jetson, Local_Paths
 
 def run(cmd):
@@ -18,6 +18,7 @@ def write_dashboard_info(user, ssid):
     dashboard_info = {
         "JetsonHost": f"{user}: {Jetson.HOST_SULLY}",
         "WiFi": f"{ssid}",  
+        "LastUpdated": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
     write_json(os.path.join(Local_Paths.DATA_DIR, "dash_info.json"), dashboard_info)
-    print("[INFO] Dashboard info written.")
+    # print("[INFO] Dashboard info written.")
