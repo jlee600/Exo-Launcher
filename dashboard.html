@@ -52,6 +52,7 @@
     border-radius:10px; padding:12px; min-height:90px;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     text-align:center; font-size:14px;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
   }
   .ready{ background:var(--green-100); border-color:var(--green) }
   .blocked{ background:var(--red-100); border-color:var(--red) }
@@ -72,7 +73,7 @@
   }
 
   /* Buttons */
-  .btn { margin-top:8px; padding:4px 12px; font-size:12px; border:none; border-radius:6px; cursor:pointer; font-weight:500 }
+  .btn { margin-top:8px; padding:4px 12px; font-size:12px; border:none; border-radius:6px; cursor:pointer; font-weight:500; transition: background-color 0.3s ease, color 0.3s ease; }
   .btn-run { background: var(--blue-100); color: var(--blue); }
   .btn-run:hover { background: var(--blue); color: white; }
   .btn-disabled { background: var(--gray-100); color: var(--muted); cursor: not-allowed; }
@@ -104,20 +105,16 @@
       </div>
     </div>
 
-    <!-- live sync state -->
     <div id="sync" class="sync">
-      <span class="spinner" aria-hidden="true"></span>
+      <span class="spinner" aria-hidden="true" style="display: none;"></span>
       <span id="sync-text">Syncing…</span>
     </div>
   </header>
 
-  <!-- Controller Grid -->
   <section id="grid" class="grid"></section>
 
-  <!-- Footer -->
   <footer>
     <div class="footer-grid">
-      <!-- SENSORS -->
       <div class="section">
         <h3>SENSORS</h3>
         <table id="sensor-table">
@@ -128,7 +125,6 @@
         </table>
       </div>
 
-      <!-- ACTUATORS -->
       <div class="section">
         <h3>ACTUATORS</h3>
         <table id="motor-table">
@@ -139,7 +135,6 @@
         </table>
       </div>
 
-      <!-- SUMMARY -->
       <div class="section">
         <h3>SUMMARY</h3>
         <table>
@@ -154,134 +149,230 @@
     </div>
   </footer>
 
-<script>
-  const OUTPUT_URL = './data/comparison_output.json';
-  const META_URL   = './data/meta.json';
-  const INFO_URL   = './data/dash_info.json';
-  const REFRESH_MS = 5000;
-
-  // cache-busting to avoid stale fetches
-  const bust = url => `${url}?t=${Date.now()}`;
-
-  const statusClass = s => (s === 1 ? 'ready' : s === 0 ? 'blocked' : 'unknown');
-
-  // Keep last snapshots to avoid unnecessary DOM work (prevents flicker)
-  let lastCmpStr = '', lastMetaStr = '', lastInfoStr = '';
-
-  function buildCard(name, data) {
-    const card = document.createElement('div');
-    card.className = `card ${statusClass(data.status)}`;
-
-    if (Array.isArray(data.missing) && data.missing.length) {
-      const lines = data.missing.map(m => '• ' + m).join('\n');
-      card.setAttribute('data-missing', lines);
+  <script>
+    const OUTPUT_URL = './data/comparison_output.json';
+    const META_URL = './data/meta.json';
+    const INFO_URL = './data/dash_info.json';
+    const REFRESH_MS = 5000;
+  
+    const bust = url => `${url}?t=${Date.now()}`;
+    const statusClass = s => (s === 1 ? 'ready' : s === 0 ? 'blocked' : 'unknown');
+  
+    function setBadge(kind, msg){
+      const badge = document.getElementById('sync');
+      const txt   = document.getElementById('sync-text');
+      const spin  = badge.querySelector('.spinner');
+      spin.style.display = 'none'; 
+      badge.classList.remove('ok','error');
+      if (kind === 'ok')    badge.classList.add('ok');
+      if (kind === 'error') badge.classList.add('error');
+      if (txt.textContent !== msg) txt.textContent = msg; 
+    }
+  
+    /**
+     * Creates a new card element, but does NOT append it.
+     */
+    function buildCard(name, data){
+      const card = document.createElement('div');
+      card.dataset.name = name; 
+      card.className = `card ${statusClass(data.status)}`;
+      
+      const missingText = (Array.isArray(data.missing) && data.missing.length) 
+        ? data.missing.map(m => '• ' + m).join('\n') 
+        : '';
+      if (missingText) {
+        card.setAttribute('data-missing', missingText);
+      }
+  
+      const title = document.createElement('div');
+      title.className = 'name';
+      title.textContent = name;
+      card.appendChild(title);
+  
+      const btn = document.createElement('button');
+      btn.textContent = 'Run';
+      if (data.status === 1){
+        btn.className = 'btn btn-run';
+        btn.onclick = () => alert(`(Demo) Would launch: ${name}`);
+      } else {
+        btn.className = 'btn btn-disabled';
+        btn.disabled = true;
+      }
+      card.appendChild(btn);
+      return card;
     }
 
-    const title = document.createElement('div');
-    title.className = 'name';
-    title.textContent = name;
-    card.appendChild(title);
-
-    const btn = document.createElement('button');
-    btn.textContent = 'Run';
-    if (data.status === 1) {
-      btn.className = 'btn btn-run';
-      btn.onclick = () => alert(`(Demo) Would launch: ${name}`);
-    } else {
-      btn.className = 'btn btn-disabled';
-      btn.disabled = true;
-    }
-    card.appendChild(btn);
-
-    return card;
-  }
-
-  async function fetchJSON(url) {
-    const res = await fetch(bust(url), { cache: 'no-store' });
-    if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-    return res.json();
-  }
-
-  function setSyncState(kind, msg) {
-    const badge = document.getElementById('sync');
-    const text  = document.getElementById('sync-text');
-    badge.querySelector('.spinner').style.display = (kind === 'busy') ? 'inline-block' : 'none';
-    badge.classList.remove('ok','error');
-    if (kind === 'ok')   badge.classList.add('ok');
-    if (kind === 'error')badge.classList.add('error');
-    text.textContent = msg;
-  }
-
-  async function loadAll() {
-    try {
-      setSyncState('busy', 'Syncing…');
-      const [cmp, meta, info] = await Promise.all([
-        fetchJSON(OUTPUT_URL),
-        fetchJSON(META_URL),
-        fetchJSON(INFO_URL)
-      ]);
-
-      // stringify to detect changes
-      const cmpStr  = JSON.stringify(cmp);
-      const metaStr = JSON.stringify(meta);
-      const infoStr = JSON.stringify(info);
-
-      // Grid (only update if changed)
-      if (cmpStr !== lastCmpStr) {
-        const grid = document.getElementById('grid');
-        const frag = document.createDocumentFragment();
-        Object.entries(cmp.controllers).forEach(([name, data]) => {
-          frag.appendChild(buildCard(name, data));
-        });
-        grid.replaceChildren(frag);
-        lastCmpStr = cmpStr;
+    /**
+     * Updates an existing card element in-place.
+     */
+    function updateCard(card, data) {
+      // 1. Update Status Class
+      const newClass = statusClass(data.status);
+      if (!card.classList.contains(newClass)) {
+        card.className = `card ${newClass}`;
+        card.dataset.name = card.dataset.name; 
       }
 
-      // Sensors (update if changed)
-      if (metaStr !== lastMetaStr) {
-        const sensorTbody = document.querySelector('#sensor-table tbody');
-        sensorTbody.innerHTML = '';
-        (meta.IMUs || []).forEach(id => {
-          sensorTbody.insertAdjacentHTML('beforeend',
-            `<tr><td>${id}</td><td>IMU</td><td><span class="pill">connected</span></td></tr>`);
-        });
-        if (meta.Xsensors) {
-          sensorTbody.insertAdjacentHTML('beforeend',
-            `<tr><td>(Xsensor)</td><td>Insole</td><td><span class="pill">connected</span></td></tr>`);
+      // 2. Update Missing Data Tooltip
+      const missingText = (Array.isArray(data.missing) && data.missing.length)
+        ? data.missing.map(m => '• ' + m).join('\n')
+        : '';
+      if (missingText) {
+        if (card.getAttribute('data-missing') !== missingText) {
+          card.setAttribute('data-missing', missingText);
         }
-
-        // Motors
-        const motorTbody = document.querySelector('#motor-table tbody');
-        motorTbody.innerHTML = '';
-        const ids   = meta.Motors?.["motor-id"]    || [];
-        const types = meta.Motors?.["motor-types"] || [];
-        ids.forEach((id, i) => {
-          const type = types[i] || types[0] || '-';
-          motorTbody.insertAdjacentHTML('beforeend', `<tr><td>${id}</td><td>${type}</td></tr>`);
-        });
-
-        lastMetaStr = metaStr;
+      } else if (card.hasAttribute('data-missing')) {
+        card.removeAttribute('data-missing');
       }
 
-      // Summary (update if changed)
-      if (infoStr !== lastInfoStr || cmpStr !== lastCmpStr) {
-        document.getElementById('sum-host').textContent = info.JetsonHost || '—';
-        document.getElementById('sum-wifi').textContent = info.WiFi || '—';
-        document.getElementById('sum-xsens').textContent = (meta.Xsensors ? 'ON' : 'OFF');
-        document.getElementById('sum-ts').textContent = (cmp.summary && cmp.summary.timestamp) ? cmp.summary.timestamp : '—';
-        lastInfoStr = infoStr;
+      // 3. Update Button State
+      const btn = card.querySelector('button');
+      const isReady = data.status === 1;
+      if (isReady && btn.disabled) {
+        // Change to "Ready" state
+        btn.className = 'btn btn-run';
+        btn.disabled = false;
+        btn.onclick = () => alert(`(Demo) Would launch: ${card.dataset.name}`);
+      } else if (!isReady && !btn.disabled) {
+        // Change to "Disabled" state
+        btn.className = 'btn btn-disabled';
+        btn.disabled = true;
+        btn.onclick = null;
       }
-
-      setSyncState('ok', 'Live');
-    } catch (err) {
-      console.error('Dashboard update failed:', err);
-      setSyncState('error', 'Offline');
     }
-  }
 
-  loadAll();
-  setInterval(loadAll, REFRESH_MS);
-</script>
+    /**
+     * Smartly updates the controller grid.
+     * It adds new cards, removes old ones, and updates existing ones in-place.
+     */
+    function updateGrid(controllers) {
+      const grid = document.getElementById('grid');
+      const existingCards = new Map();
+      grid.querySelectorAll('.card[data-name]').forEach(card => {
+        existingCards.set(card.dataset.name, card);
+      });
+
+      const controllersToProcess = new Set(Object.keys(controllers));
+
+      // Update existing cards and add new ones
+      for (const [name, data] of Object.entries(controllers)) {
+        const existingCard = existingCards.get(name);
+        if (existingCard) {
+          // Card exists: update it in-place
+          updateCard(existingCard, data);
+        } else {
+          // Card is new: create and append it
+          grid.appendChild(buildCard(name, data));
+        }
+        controllersToProcess.delete(name);
+        existingCards.delete(name);
+      }
+
+      // Remove old cards that are no longer in the data
+      existingCards.forEach(card => card.remove());
+    }
+
+    /**
+     * Smartly updates a table (tbody).
+     * It adds new rows, removes old rows, and assumes existing rows don't change.
+     */
+    function updateTable(tbody, items, buildRowHtml, idKey) {
+      const existingRows = new Map();
+      tbody.querySelectorAll('tr[data-id]').forEach(row => {
+        existingRows.set(row.dataset.id, row);
+      });
+
+      const newIds = new Set();
+      
+      // Add new rows
+      for (const item of items) {
+        const id = String(item[idKey]);
+        newIds.add(id);
+        if (!existingRows.has(id)) {
+          // Row is new, create and append
+          const html = buildRowHtml(item, id);
+          tbody.insertAdjacentHTML('beforeend', html);
+        }
+      }
+
+      // Remove old rows
+      existingRows.forEach((row, id) => {
+        if (!newIds.has(id)) {
+          row.remove();
+        }
+      });
+    }
+
+    /**
+     * Updates a single text element only if its content has changed.
+     */
+    function updateText(element, newText) {
+      if (element.textContent !== newText) {
+        element.textContent = newText;
+      }
+    }
+  
+    async function fetchJSON(url){
+      const res = await fetch(bust(url), { cache: 'no-store' });
+      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+      return res.json();
+    }
+  
+    async function loadAll(){
+      try{
+        const [cmp, meta, info] = await Promise.all([
+          fetchJSON(OUTPUT_URL),
+          fetchJSON(META_URL),
+          fetchJSON(INFO_URL)
+        ]);
+  
+        // 1. Controllers 
+        updateGrid(cmp.controllers);
+  
+        // 2. Sensors 
+        const sBody = document.querySelector('#sensor-table tbody');
+        const imus = (meta.IMUs || []).map(id => ({ id, type: 'IMU' }));
+        if (meta.Xsensors) {
+          imus.push({ id: 'xsens', type: 'Insole' });
+        }
+        const sensorHtml = (item, id) => 
+          `<tr data-id="${id}">
+             <td>${item.id === 'xsens' ? '(Xsensor)' : item.id}</td>
+             <td>${item.type}</td>
+             <td><span class="pill">connected</span></td>
+           </tr>`;
+        updateTable(sBody, imus, sensorHtml, 'id');
+
+        // 3. Motors (Flicker-Free)
+        const mBody = document.querySelector('#motor-table tbody');
+        const motorTypes = meta.Motors?.['motor-types'] || [];
+        const motors = (meta.Motors?.['motor-id'] || []).map((id, i) => ({
+          id: id,
+          type: motorTypes[i] || motorTypes[0] || '—'
+        }));
+        const motorHtml = (item, id) => 
+          `<tr data-id="${id}">
+             <td>${item.id}</td>
+             <td>${item.type}</td>
+           </tr>`;
+        updateTable(mBody, motors, motorHtml, 'id');
+  
+        // 4. Summary 
+        updateText(document.getElementById('sum-host'), info.JetsonHost || '—');
+        updateText(document.getElementById('sum-wifi'), info.WiFi || '—');
+        updateText(document.getElementById('sum-xsens'), meta.Xsensors ? 'ON' : 'OFF');
+        updateText(document.getElementById('sum-ts'), (cmp.summary?.timestamp) || '—');
+  
+        setBadge('ok','Live');
+      } catch (e){
+        console.error('Dashboard update failed:', e);
+        setBadge('error','Offline');
+      }
+    }
+  
+    loadAll();
+    setInterval(loadAll, REFRESH_MS);
+  </script>
 
 </body>
 </html>
