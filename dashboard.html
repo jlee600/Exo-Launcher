@@ -48,7 +48,7 @@
     display:flex; gap:24px; padding:24px; min-height:0; flex:1;
   }
 
-  /* GRID (left) — scrolling area */
+  /* GRID (left) */
   main{flex:1; min-width:0; overflow:auto; padding-top:4.5px;}
   .grid{
     display:grid; gap:24px;
@@ -76,7 +76,7 @@
     position:relative;
     z-index: 1;
     height: 130px;
-    overflow: hidden;
+    /* overflow: hidden; */
   }
   /* accent bar */
   .card::before{
@@ -124,7 +124,6 @@
     width: max-content;
     max-width: 92%;
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
-    z-index: 30;
     pointer-events: none;
     opacity: 0;
     animation: tooltipFadeIn 0.2s ease forwards;
