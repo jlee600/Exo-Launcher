@@ -467,16 +467,15 @@
 
         // 3. Motors (Flicker-Free)
         const mBody = document.querySelector('#motor-table tbody');
-        const motorTypes = meta.Motors?.['motor-types'] || [];
-        const motors = (meta.Motors?.['motor-id'] || []).map((id, i) => ({
-          id: id,
-          type: motorTypes[i] || motorTypes[0] || '—'
-        }));
+        const motors = Array.isArray(meta.Motors) ? meta.Motors.map(m => ({
+          id: m.id,
+          type: m.type || '—'
+        })) : [];
         const motorHtml = (item, id) => 
           `<tr data-id="${id}">
-             <td>${item.id}</td>
-             <td>${item.type}</td>
-           </tr>`;
+            <td>${item.id}</td>
+            <td>${item.type}</td>
+          </tr>`;
         updateTable(mBody, motors, motorHtml, 'id');
   
         // 4. Summary 
