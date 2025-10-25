@@ -43,6 +43,20 @@
   .spinner{width:12px;height:12px;border:2px solid var(--gray-100);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
 
+  /* search */
+  .search input{
+    width: 240px; max-width: 30vw; padding: 8px 10px;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--card); color: var(--fg); font-size: 13px;
+    outline: none; transition: box-shadow .2s, border-color .2s;
+  }
+  .search input:focus{
+    border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+  }
+
+  /* hide non-matching cards smoothly */
+  .card.is-hidden { opacity: .15; transform: scale(.985); pointer-events: none; }
+
   /* MAIN LAYOUT — grid + aside */
   .main-layout{
     display:flex; gap:24px; padding:24px; min-height:0; flex:1;
@@ -210,9 +224,12 @@
         <span class="lg"><span class="dot dot-gray"></span>UNKNOWN</span>
       </div>
     </div>
-    <div id="sync" class="sync">
+    <!-- <div id="sync" class="sync">
       <span class="spinner" aria-hidden="true" style="display:none;"></span>
       <span id="sync-text">Syncing…</span>
+    </div> -->
+    <div class="search">
+      <input id="ctrl-search" type="text" placeholder="Search controllers" autocomplete="off" />
     </div>
   </header>
 
@@ -258,6 +275,39 @@
   
     const bust = url => `${url}?t=${Date.now()}`;
     const statusClass = s => (s === 1 ? 'ready' : s === 0 ? 'blocked' : 'unknown');
+
+    // keep last controllers snapshot for filtering
+    let lastControllers = {};
+    let currentQuery = "";
+
+    function matchesQuery(name, data, q) {
+      if (!q) return true;
+      const norm = s => s.replace(/\.py$/i,'').toLowerCase();
+      if (q.startsWith('@')) { 
+        const needle = norm(q.slice(1));
+        return norm(name).includes(needle) ||
+              (Array.isArray(data.missing) && data.missing.join(' ').toLowerCase().includes(needle));
+      }
+      return norm(name).includes(norm(q));
+    }
+
+    function applyFilter() {
+      const grid = document.getElementById('grid');
+      const cards = grid.querySelectorAll('.card[data-name]');
+      cards.forEach(card => {
+        const name = card.dataset.name;
+        const data = lastControllers[name];
+        const show = matchesQuery(name, data, currentQuery);
+        card.classList.toggle('is-hidden', !show);
+      });
+    }
+    const searchInput = document.getElementById('ctrl-search');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        currentQuery = e.target.value.trim();
+        applyFilter();
+      });
+    }
   
     function setBadge(kind, msg){
       const badge = document.getElementById('sync');
@@ -371,6 +421,8 @@
 
       // Remove old cards that are no longer in the data
       existingCards.forEach(card => card.remove());
+      lastControllers = controllers;
+      applyFilter();
     }
 
     /**
