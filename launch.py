@@ -1,5 +1,5 @@
+import sys, platform, signal, webbrowser, threading, time
 from config import Wifi, Jetson, Colors, Local_Paths, HTML
-import sys, platform, signal, webbrowser
 from util.html import start_static_server, start_api_server
 from util.utils import write_dashboard_info
 from util.ssh import ensure_master, close_master, periodic_sync, run_remote_controller
@@ -21,11 +21,12 @@ def main():
     print(Colors.green("\n[SSH] Connecting to SULLY\n"))
     if not ensure_master(Jetson.USER_SULLY, Jetson.HOST_SULLY, persist="5m"):
         sys.exit(1)
+    write_dashboard_info(Jetson.USER_SULLY, Wifi.SSID_CAREN)
 
-    # 3. start api server
+    # 3. API server
     api = start_api_server(run_remote_controller, host="127.0.0.1", port=HTML.API_PORT)
 
-    # 4. open dashboard in browser
+    # 4. Static server (dashboard)
     httpd = start_static_server(Local_Paths.ROOT, port = HTML.POLL_PORT)
     url = f"http://127.0.0.1:{HTML.POLL_PORT}/dashboard.html"
     print(Colors.yellow(f"[UI] Opening dashboard at {url}\n"))
@@ -46,10 +47,16 @@ def main():
     signal.signal(signal.SIGINT, _cleanup)
     signal.signal(signal.SIGTERM, _cleanup)
 
-    # 5. Loop: batch compare + pull every 5s
-    periodic_sync(Jetson.USER_SULLY, Jetson.HOST_SULLY, interval_sec=5)
-    
-    # print("\nAll operations completed successfully.")
+    # 5. Sync thread
+    sync_thread = threading.Thread(target=periodic_sync, args=(Jetson.USER_SULLY, Jetson.HOST_SULLY, 5), daemon=True)
+    sync_thread.start()    
+
+    # Keep main thread alive
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        _cleanup()
 
 if __name__ == "__main__":
     main()
