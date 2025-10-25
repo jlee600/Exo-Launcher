@@ -1,7 +1,6 @@
-import os, socket, json, time, datetime
-from config import Remote_Paths, Colors
+import os, socket, json, time, datetime, re, shlex
+from config import Remote_Paths, Colors, Local_Paths, Jetson, SpecialControllers
 from util.utils import run, write_json, write_dashboard_info
-from config import Local_Paths
 
 ##############################
 # SSH control master helpers
@@ -110,3 +109,50 @@ def periodic_sync(user, host, interval_sec=5):
             print(Colors.red(f"[SYNC {curr}] Update failed"))
 
         time.sleep(interval_sec)
+
+##############################
+# Launch controller remotely
+###############################
+SAFE_NAME_RE = re.compile(r'^[A-Za-z0-9_\-\.]+$')
+
+def ready_locally(name):
+    """
+    only allow running controllers that are currently READY in comparison_output.json
+    and whose name is sane (no path traversal).
+    """
+    if not SAFE_NAME_RE.match(name):
+        return False
+    try:
+        with open(Local_Paths.OUTPUT, "r") as f:
+            cmp = json.load(f)
+        controllers = cmp.get("controllers", {})
+        entry = controllers.get(name) or controllers.get(f"{name}.py")
+        return bool(entry and entry.get("status") == 1)
+    except Exception:
+        return False
+
+def run_remote_controller(name):
+    """
+    Runs the named controller on Sully via the SSH control master.
+    Returns (ok: bool, message: str).
+    """
+    normalized = name if name.endswith(".py") else f"{name}.py"
+
+    if (not ready_locally(normalized) and normalized not in SpecialControllers.ALLOWED and name not in SpecialControllers.ALLOWED):
+        return (False, f"Blocked or unknown controller: {normalized}")
+
+    if not ensure_master(Jetson.USER_SULLY, Jetson.HOST_SULLY, persist="5m"):
+        return (False, "SSH control master not available")
+
+    cp = control_path(Jetson.USER_SULLY, Jetson.HOST_SULLY)
+    remote_cmd = f"cd {shlex.quote(Remote_Paths.CONTROLLERS)} && python3 {shlex.quote(normalized)}"
+
+    r = run([
+        "ssh",
+        "-o", "StrictHostKeyChecking=accept-new",
+        "-S", cp, f"{Jetson.USER_SULLY}@{Jetson.HOST_SULLY}",
+        remote_cmd
+    ])
+    if r.returncode != 0:
+        return (False, f"Remote run failed: {r.stderr.strip() or r.stdout.strip()}")
+    return (True, r.stdout.strip() or "Started.")

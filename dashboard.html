@@ -1,220 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>EPIC Controller Dashboard</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EPIC Controller Dashboard</title>
 
-<style>
-  :root {
-    --bg:#f9fafb; --fg:#111827; --muted:#6b7280;
-    --green:#10b981; --green-100:#d1fae5;
-    --red:#ef4444; --red-100:#fee2e2;
-    --gray:#9ca3af; --gray-100:#f3f4f6;
-    --card:#ffffff; --border:#e5e7eb;
-    --blue:#2563eb; --blue-100:#dbeafe;
-    --shadow:0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
-    --shadow-md:0 6px 16px rgba(0,0,0,.10);
-  }
-  *{box-sizing:border-box}
-
-  html,body{
-    height:100vh; overflow:visible; margin:0;
-    background:var(--bg); color:var(--fg);
-    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif
-  }
-
-  /* HEADER */
-  header{
-    height:72px;
-    padding:16px 24px;
-    display:flex; align-items:center; justify-content:space-between; gap:12px;
-    background:var(--card); border-bottom:1px solid var(--border);
-    flex-shrink:0;
-  }
-  h1{font-size:20px;margin:0}
-  .legend{display:flex;gap:12px;margin-top:4px;flex-wrap:wrap}
-  .lg{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
-  .dot{width:10px;height:10px;border-radius:50%}
-  .dot-green{background:var(--green)} .dot-red{background:var(--red)} .dot-gray{background:var(--gray)}
-  .sync{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);background:var(--gray-100);border:1px solid var(--border);border-radius:999px;padding:6px 12px}
-  .ok{color:var(--green);background:var(--green-100);border-color:var(--green)}
-  .error{color:var(--red);background:var(--red-100);border-color:var(--red)}
-  .spinner{width:12px;height:12px;border:2px solid var(--gray-100);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-
-  /* search */
-  .search input{
-    width: 240px; max-width: 30vw; padding: 8px 10px;
-    border: 1px solid var(--border); border-radius: 8px;
-    background: var(--card); color: var(--fg); font-size: 13px;
-    outline: none; transition: box-shadow .2s, border-color .2s;
-  }
-  .search input:focus{
-    border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,.12);
-  }
-
-  /* hide non-matching cards smoothly */
-  .card.is-hidden { opacity: .15; transform: scale(.985); pointer-events: none; }
-
-  /* MAIN LAYOUT — grid + aside */
-  .main-layout{
-    display:flex; gap:24px; padding:24px; min-height:0; flex:1;
-  }
-
-  /* GRID (left) */
-  main{flex:1; min-width:0; overflow:auto; padding-top:4.5px;}
-  .grid{
-    display:grid; gap:24px;
-    grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
-    align-items:start;
-    align-content: start;
-    grid-auto-rows: 130px;
-    position: relative;
-    overflow: visible;
-  }
-  aside { padding-top:4.5px; }
-
-  /* Controller Card */
-  .card{
-    --accent: var(--gray);
-    background:
-      linear-gradient(180deg,#ffffff 0%, #fbfbfb 100%);
-    border:1px solid var(--border);
-    border-radius:12px;
-    padding:14px 12px;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    text-align:center; font-size:14px;
-    box-shadow:var(--shadow);
-    transition: transform .18s ease, box-shadow .18s ease, border-color .2s ease;
-    position:relative;
-    z-index: 1;
-    height: 130px;
-    /* overflow: hidden; */
-  }
-  /* accent bar */
-  .card::before{
-    content:"";
-    position:absolute; left:0; top:8px; bottom:8px; width:4px;
-    border-radius:6px;
-    background:var(--accent);
-    opacity:.9;
-  }
-  /* status colors */
-  .ready  { --accent: var(--green); }
-  .blocked{ --accent: var(--red); }
-  .unknown{ --accent: var(--gray); }
-
-  .card:hover{
-    transform:translateY(-2px);
-    box-shadow:var(--shadow-md);
-    border-color:#d7e2f4;
-    z-index: 1000;
-  }
-
-  .name{
-    font-weight:600;
-    line-height:1.3;
-    width:100%;
-    word-break:break-word;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .card[data-missing]:hover::after {
-    content: attr(data-missing);
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%) scale(1);
-    background: rgba(17, 24, 39, 0.95);
-    color: #f9fafb;
-    padding: 14px 18px;
-    font-size: 13.5px;
-    line-height: 1.6;
-    border-radius: 14px;
-    white-space: pre-wrap;
-    text-align: left;
-    width: max-content;
-    max-width: 92%;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
-    pointer-events: none;
-    opacity: 0;
-    animation: tooltipFadeIn 0.2s ease forwards;
-    backdrop-filter: blur(8px);
-    z-index: 1001;
-  }
-
-  .card[data-missing]:hover::after {
-    content: attr(data-missing);
-    counter-reset: bullet;
-  }
-  .card[data-missing]:hover::after {
-    content: attr(data-missing);
-    display: block;
-  }
-  .card[data-missing]:hover::after {
-    font-family: "SF Pro Text", system-ui, sans-serif;
-  }
-
-  @keyframes tooltipFadeIn {
-    from {
-      opacity: 0;
-      transform: translate(-50%, -52%) scale(0.97);
-    }
-    to {
-      opacity: 1;
-      transform: translate(-50%, -50%) scale(1);
-    }
-  }
-
-  /* Buttons */
-  .btn{
-    margin-top:8px; padding:6px 14px; font-size:12px; font-weight:600;
-    border:none; border-radius:8px; cursor:pointer;
-    background:linear-gradient(180deg,var(--blue-100),#e8f0ff);
-    color:var(--blue);
-    transition:filter .2s ease, transform .08s ease;
-  }
-  .btn:hover{filter:brightness(.98)}
-  .btn:active{transform:translateY(1px)}
-  .btn-run:hover{background:var(--blue); color:#fff; box-shadow:0 2px 6px rgba(37,99,235,.28)}
-  .btn-disabled{background:var(--gray-100); color:var(--muted); cursor:not-allowed}
-
-  /* ASIDE  */
-  aside{
-    flex-basis:340px; flex-shrink:0; min-width:340px;
-    display:flex; flex-direction:column; gap:24px;
-    overflow:auto;
-  }
-  .section{
-    background:var(--card);
-    border:1px solid var(--border);
-    border-radius:12px;
-    padding:14px;
-    box-shadow:var(--shadow);
-  }
-  .section h3{
-    margin:0 0 10px; font-size:14px; color:var(--muted);
-    font-weight:700; text-transform:uppercase; letter-spacing:.02em;
-  }
-  table{width:100%; border-collapse:collapse; font-size:13px}
-  th,td{padding:8px; border-bottom:1px solid var(--border); text-align:left}
-  tr:last-child td{border-bottom:none}
-  th{color:var(--muted); font-weight:600}
-  .pill{display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; background:var(--gray-100); color:var(--muted)}
-
-  @media (max-width:900px){
-    html,body{height:auto; overflow:auto}
-    .main-layout{flex-direction:column}
-    aside{min-width:0; flex-basis:auto; overflow:visible}
-  }
-  @media (max-width:700px){
-    .grid{grid-template-columns:1fr}
-  }
-</style>
+  <!-- External stylesheet -->
+  <link rel="stylesheet" href="./assets/styles.css">
+</head>
 
 <body>
+  <!-- HEADER -->
   <header>
     <div>
       <h1>EPIC Controller Dashboard</h1>
@@ -224,327 +20,79 @@
         <span class="lg"><span class="dot dot-gray"></span>UNKNOWN</span>
       </div>
     </div>
-    <!-- <div id="sync" class="sync">
-      <span class="spinner" aria-hidden="true" style="display:none;"></span>
-      <span id="sync-text">Syncing…</span>
-    </div> -->
+
     <div class="search">
       <input id="ctrl-search" type="text" placeholder="Search controllers" autocomplete="off" />
     </div>
   </header>
 
+  <!-- MAIN LAYOUT -->
   <div class="main-layout">
+    <!-- LEFT: Controller Grid -->
     <main id="grid" class="grid"></main>
 
+    <!-- RIGHT: Sidebar -->
     <aside>
+      <!-- Sensors Section -->
       <div class="section">
         <h3>SENSORS</h3>
         <table id="sensor-table">
-          <thead><tr><th>Device ID</th><th>Type</th><th>Status</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Device ID</th>
+              <th>Type</th>
+              <th>Status</th>
+            </tr>
+          </thead>
           <tbody></tbody>
         </table>
       </div>
 
+      <!-- Actuators Section -->
       <div class="section">
         <h3>ACTUATORS</h3>
         <table id="motor-table">
-          <thead><tr><th>Motor ID</th><th>Type</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Motor ID</th>
+              <th>Type</th>
+            </tr>
+          </thead>
           <tbody></tbody>
         </table>
       </div>
 
+      <!-- Summary Section -->
       <div class="section">
         <h3>SUMMARY</h3>
         <table>
           <tbody>
-            <tr><td>Jetson Host</td><td><span class="pill" id="sum-host">—</span></td></tr>
-            <tr><td>Xsensors</td><td><span class="pill" id="sum-xsens">—</span></td></tr>
-            <tr><td>Wi-Fi</td><td><span class="pill" id="sum-wifi">—</span></td></tr>
-            <tr><td>Last updated</td><td><span class="pill" id="sum-ts">—</span></td></tr>
+            <tr>
+              <td>Jetson Host</td>
+              <td><span class="pill" id="sum-host">—</span></td>
+            </tr>
+            <tr>
+              <td>Xsensors</td>
+              <td><span class="pill" id="sum-xsens">—</span></td>
+            </tr>
+            <tr>
+              <td>Wi-Fi</td>
+              <td><span class="pill" id="sum-wifi">—</span></td>
+            </tr>
+            <tr>
+              <td>Last updated</td>
+              <td><span class="pill" id="sum-ts">—</span></td>
+            </tr>
           </tbody>
         </table>
       </div>
     </aside>
   </div>
 
-  <script>
-    const OUTPUT_URL = './data/comparison_output.json';
-    const META_URL = './data/meta.json';
-    const INFO_URL = './data/dash_info.json';
-    const REFRESH_MS = 5000;
-  
-    const bust = url => `${url}?t=${Date.now()}`;
-    const statusClass = s => (s === 1 ? 'ready' : s === 0 ? 'blocked' : 'unknown');
+  <!-- TOAST ROOT (centered below header) -->
+  <div id="toast-root" aria-live="polite" aria-atomic="true"></div>
 
-    // keep last controllers snapshot for filtering
-    let lastControllers = {};
-    let currentQuery = "";
-
-    function matchesQuery(name, data, q) {
-      if (!q) return true;
-      const norm = s => s.replace(/\.py$/i,'').toLowerCase();
-      if (q.startsWith('@')) { 
-        const needle = norm(q.slice(1));
-        return norm(name).includes(needle) ||
-              (Array.isArray(data.missing) && data.missing.join(' ').toLowerCase().includes(needle));
-      }
-      return norm(name).includes(norm(q));
-    }
-
-    function applyFilter() {
-      const grid = document.getElementById('grid');
-      const cards = grid.querySelectorAll('.card[data-name]');
-      cards.forEach(card => {
-        const name = card.dataset.name;
-        const data = lastControllers[name];
-        const show = matchesQuery(name, data, currentQuery);
-        card.classList.toggle('is-hidden', !show);
-      });
-    }
-    const searchInput = document.getElementById('ctrl-search');
-    if (searchInput) {
-      searchInput.addEventListener('input', (e) => {
-        currentQuery = e.target.value.trim();
-        applyFilter();
-      });
-    }
-  
-    function setBadge(kind, msg){
-      const badge = document.getElementById('sync');
-      const txt   = document.getElementById('sync-text');
-      const spin  = badge.querySelector('.spinner');
-      spin.style.display = 'none'; 
-      badge.classList.remove('ok','error');
-      if (kind === 'ok')    badge.classList.add('ok');
-      if (kind === 'error') badge.classList.add('error');
-      if (txt.textContent !== msg) txt.textContent = msg; 
-    }
-  
-    /**
-     * Creates a new card element, but does NOT append it.
-     */
-    function buildCard(name, data){
-      const card = document.createElement('div');
-      card.dataset.name = name; 
-      card.className = `card ${statusClass(data.status)}`;
-      
-      const missingText = (Array.isArray(data.missing) && data.missing.length) 
-        ? data.missing.map(m => '• ' + m).join('\n') 
-        : '';
-      if (missingText) {
-        card.setAttribute('data-missing', missingText);
-      }
-  
-      const title = document.createElement('div');
-      title.className = 'name';
-      title.textContent = name;
-      card.appendChild(title);
-  
-      const btn = document.createElement('button');
-      btn.textContent = 'Run';
-      if (data.status === 1){
-        btn.className = 'btn btn-run';
-        btn.onclick = () => alert(`(Demo) Would launch: ${name}`);
-      } else {
-        btn.className = 'btn btn-disabled';
-        btn.disabled = true;
-      }
-      card.appendChild(btn);
-      return card;
-    }
-
-    /**
-     * Updates an existing card element in-place.
-     */
-    function updateCard(card, data) {
-      // 1. Update Status Class
-      const newClass = statusClass(data.status);
-      if (!card.classList.contains(newClass)) {
-        card.className = `card ${newClass}`;
-        card.dataset.name = card.dataset.name; 
-      }
-
-      // 2. Update Missing Data Tooltip
-      const missingText = (Array.isArray(data.missing) && data.missing.length)
-        ? data.missing.map(m => '• ' + m).join('\n')
-        : '';
-      if (missingText) {
-        if (card.getAttribute('data-missing') !== missingText) {
-          card.setAttribute('data-missing', missingText);
-        }
-      } else if (card.hasAttribute('data-missing')) {
-        card.removeAttribute('data-missing');
-      }
-
-      // 3. Update Button State
-      const btn = card.querySelector('button');
-      const isReady = data.status === 1;
-      if (isReady && btn.disabled) {
-        // Change to "Ready" state
-        btn.className = 'btn btn-run';
-        btn.disabled = false;
-        btn.onclick = () => alert(`(Demo) Would launch: ${card.dataset.name}`);
-      } else if (!isReady && !btn.disabled) {
-        // Change to "Disabled" state
-        btn.className = 'btn btn-disabled';
-        btn.disabled = true;
-        btn.onclick = null;
-      }
-    }
-
-    /**
-     * Smartly updates the controller grid.
-     * It adds new cards, removes old ones, and updates existing ones in-place.
-     */
-    function updateGrid(controllers) {
-      const grid = document.getElementById('grid');
-      const existingCards = new Map();
-      grid.querySelectorAll('.card[data-name]').forEach(card => {
-        existingCards.set(card.dataset.name, card);
-      });
-
-      const controllersToProcess = new Set(Object.keys(controllers));
-
-      // Update existing cards and add new ones
-      for (const [name, data] of Object.entries(controllers)) {
-        const existingCard = existingCards.get(name);
-        if (existingCard) {
-          // Card exists: update it in-place
-          updateCard(existingCard, data);
-        } else {
-          // Card is new: create and append it
-          grid.appendChild(buildCard(name, data));
-        }
-        controllersToProcess.delete(name);
-        existingCards.delete(name);
-      }
-
-      // Remove old cards that are no longer in the data
-      existingCards.forEach(card => card.remove());
-      lastControllers = controllers;
-      applyFilter();
-    }
-
-    /**
-     * Smartly updates a table (tbody).
-     * It adds new rows, removes old rows, and assumes existing rows don't change.
-     */
-    function updateTable(tbody, items, buildRowHtml, idKey) {
-      const existingRows = new Map();
-      tbody.querySelectorAll('tr[data-id]').forEach(row => {
-        existingRows.set(row.dataset.id, row);
-      });
-
-      const newIds = new Set();
-      
-      // Add new rows
-      for (const item of items) {
-        const id = String(item[idKey]);
-        newIds.add(id);
-        if (!existingRows.has(id)) {
-          // Row is new, create and append
-          const html = buildRowHtml(item, id);
-          tbody.insertAdjacentHTML('beforeend', html);
-        }
-      }
-
-      // Remove old rows
-      existingRows.forEach((row, id) => {
-        if (!newIds.has(id)) {
-          row.remove();
-        }
-      });
-    }
-
-    /**
-     * Updates a single text element only if its content has changed.
-     */
-    function updateText(element, newText) {
-      if (element.textContent !== newText) {
-        element.textContent = newText;
-      }
-    }
-
-    (function () {
-    const trimPy = s => s.replace(/\.py$/i, '');
-
-    function applyTrim(root = document) {
-      root.querySelectorAll('.card .name').forEach(el => {
-        const raw = el.textContent || '';
-        const trimmed = trimPy(raw);
-        if (trimmed !== raw) el.textContent = trimmed;
-      });
-    }
-    applyTrim();
-
-    const grid = document.getElementById('grid');
-    if (!grid) return;
-
-    const observer = new MutationObserver(() => applyTrim(grid));
-    observer.observe(grid, {
-      childList: true,
-      subtree: true,
-      characterData: true
-    });
-  })();
-  
-    async function fetchJSON(url){
-      const res = await fetch(bust(url), { cache: 'no-store' });
-      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-      return res.json();
-    }
-  
-    async function loadAll(){
-      try{
-        const [cmp, meta, info] = await Promise.all([
-          fetchJSON(OUTPUT_URL),
-          fetchJSON(META_URL),
-          fetchJSON(INFO_URL)
-        ]);
-  
-        // 1. Controllers 
-        updateGrid(cmp.controllers);
-  
-        // 2. Sensors 
-        const sBody = document.querySelector('#sensor-table tbody');
-        const imus = (meta.IMUs || []).map(id => ({ id, type: 'IMU' }));
-        
-        const sensorHtml = (item, id) => 
-          `<tr data-id="${id}">
-             <td>${item.id}</td>
-             <td>${item.type}</td>
-             <td><span class="pill">connected</span></td>
-           </tr>`;
-        updateTable(sBody, imus, sensorHtml, 'id');
-
-        // 3. Motors (Flicker-Free)
-        const mBody = document.querySelector('#motor-table tbody');
-        const motors = Array.isArray(meta.Motors) ? meta.Motors.map(m => ({
-          id: m.id,
-          type: m.type || '—'
-        })) : [];
-        const motorHtml = (item, id) => 
-          `<tr data-id="${id}">
-            <td>${item.id}</td>
-            <td>${item.type}</td>
-          </tr>`;
-        updateTable(mBody, motors, motorHtml, 'id');
-  
-        // 4. Summary 
-        updateText(document.getElementById('sum-ts'), info.LastUpdated || '—');
-        updateText(document.getElementById('sum-host'), info.JetsonHost || '—');
-        updateText(document.getElementById('sum-wifi'), info.WiFi || '—');
-        updateText(document.getElementById('sum-xsens'), meta.Xsensors ? 'ON' : 'OFF');  
-        setBadge('ok','Live');
-      } catch (e){
-        console.error('Dashboard update failed:', e);
-        setBadge('error','Offline');
-      }
-    }
-  
-    loadAll();
-    setInterval(loadAll, REFRESH_MS);
-  </script>
-
+  <!-- External JavaScript -->
+  <script defer src="./assets/app.js"></script>
 </body>
 </html>

@@ -1,8 +1,8 @@
 from config import Wifi, Jetson, Colors, Local_Paths, HTML
 import sys, platform, signal, webbrowser
-from util.html import start_static_server
+from util.html import start_static_server, start_api_server
 from util.utils import write_dashboard_info
-from util.ssh import ensure_master, close_master, periodic_sync
+from util.ssh import ensure_master, close_master, periodic_sync, run_remote_controller
 from util.wifi import connect_wifi
 
 def main():
@@ -22,13 +22,13 @@ def main():
     if not ensure_master(Jetson.USER_SULLY, Jetson.HOST_SULLY, persist="5m"):
         sys.exit(1)
 
-    # 3. write dashboard info (wifi, jetson)
-    write_dashboard_info(Jetson.USER_SULLY, Wifi.SSID_CAREN)
+    # 3. start api server
+    api = start_api_server(run_remote_controller, host="127.0.0.1", port=HTML.API_PORT)
 
     # 4. open dashboard in browser
-    httpd = start_static_server(Local_Paths.ROOT, port = HTML.PORT)
-    url = f"http://127.0.0.1:{HTML.PORT}/dashboard.html"
-    print(Colors.green(f"[UI] Opening dashboard at {url}\n"))
+    httpd = start_static_server(Local_Paths.ROOT, port = HTML.POLL_PORT)
+    url = f"http://127.0.0.1:{HTML.POLL_PORT}/dashboard.html"
+    print(Colors.yellow(f"[UI] Opening dashboard at {url}\n"))
     webbrowser.open(url)
 
     # Graceful shutdown closes control master
@@ -37,6 +37,10 @@ def main():
         try:
             close_master(Jetson.USER_SULLY, Jetson.HOST_SULLY)
         finally:
+            try:
+                api.shutdown()
+            except Exception:
+                pass
             httpd.shutdown()
         sys.exit(0)
     signal.signal(signal.SIGINT, _cleanup)
