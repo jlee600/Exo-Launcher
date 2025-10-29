@@ -95,5 +95,5 @@ def connect_wifi(operating, ssid, password, expected_ip):
         print(Colors.red("[WIFI] Unsupported OS."))
         sys.exit(1)
 
-    print(Colors.red(f"[WIFI] Failed to connect to {ssid} after few attempts."))
+    print(Colors.red(f"[WIFI] Failed to connect to {ssid} after few attempts.\n"))
     return False

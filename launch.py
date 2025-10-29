@@ -39,9 +39,11 @@ def main():
             close_master(Jetson.USER_SULLY, Jetson.HOST_SULLY)
         finally:
             try:
+                print(Colors.yellow("[API] Shutting down API server ..."))
                 api.shutdown()
             except Exception:
                 pass
+            print(Colors.yellow("[UI] Shutting down static server "))
             httpd.shutdown()
         sys.exit(0)
     signal.signal(signal.SIGINT, _cleanup)

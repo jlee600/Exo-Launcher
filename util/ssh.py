@@ -142,7 +142,7 @@ def run_remote_controller(name):
 
     cp = control_path(Jetson.USER_SULLY, Jetson.HOST_SULLY)
     remote_cmd = f"cd {shlex.quote(Remote_Paths.CONTROLLERS)} && python3 {shlex.quote(normalized)}"
-    print(Colors.yellow(f"\n[SSH] Running remote controller: {normalized}\n"))
+    print(Colors.yellow(f"\n[SSH] Running remote controller: {normalized}"))
 
     r = run([
         "ssh",
@@ -151,7 +151,10 @@ def run_remote_controller(name):
         remote_cmd
     ])
     if r.returncode != 0:
+        print(Colors.red(f"[SSH] Remote run failed:\n{r.stderr}"))
         return (False, f"Remote run failed: {r.stderr.strip() or r.stdout.strip()}")
+    
+    print(Colors.green(f"[SSH] Remote controller started:\n{r.stdout}"))
     return (True, r.stdout.strip() or "Started.")
 
 def stop_remote_controller(name):
@@ -166,7 +169,7 @@ def stop_remote_controller(name):
 
     cp = control_path(Jetson.USER_SULLY, Jetson.HOST_SULLY)
     remote_cmd = f"pkill -f {shlex.quote(normalized)}"
-    print(Colors.yellow(f"\n[SSH] Stopping remote controller: {normalized}\n"))
+    print(Colors.yellow(f"\n[SSH] Stopping remote controller: {normalized}"))
 
     r = run([
         "ssh",
@@ -175,5 +178,8 @@ def stop_remote_controller(name):
         remote_cmd
     ])
     if r.returncode != 0:
+        print(Colors.red(f"[SSH] Remote stop failed:\n{r.stderr}"))
         return (False, f"Remote stop failed: {r.stderr.strip() or r.stdout.strip()}")
+    
+    print(Colors.green(f"[SSH] Remote controller stopped:\n{r.stdout}"))
     return (True, "Stopped.")

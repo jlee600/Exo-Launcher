@@ -31,21 +31,21 @@
       "missing": [
         "IMU:pelvis=id_missing(req:154135)",
         "IMU:right.thigh=id_missing(req:154137)",
-        "IMU:right.shank=id_missing(req:154136)",
         "IMU:left.thigh=id_missing(req:156123)",
         "IMU:left.shank=id_missing(req:154138)"
       ]
     },
     "hip_controller_COMBINED_flexible_devices.py": {
-      "status": 1,
-      "missing": []
+      "status": 0,
+      "missing": [
+        "Motors=count_insufficient(req:5, got:4)"
+      ]
     },
     "hip_controller_COMBINED_noinsole.py": {
       "status": 0,
       "missing": [
         "IMU:pelvis=id_missing(req:154135)",
         "IMU:right.thigh=id_missing(req:154137)",
-        "IMU:right.shank=id_missing(req:154136)",
         "IMU:left.thigh=id_missing(req:156123)",
         "IMU:left.shank=id_missing(req:154138)"
       ]
@@ -59,18 +59,14 @@
       "missing": []
     },
     "hip_controller_COMBINED_noinsole_BO_v3.py": {
-      "status": 0,
-      "missing": [
-        "IMU:right.shank=id_missing(req:154136)",
-        "IMU:left.thigh=id_missing(req:193830)"
-      ]
+      "status": 1,
+      "missing": []
     },
     "hip_controller_COMBINED_noinsole_BO_v4.py": {
       "status": 0,
       "missing": [
         "IMU:pelvis=id_missing(req:154135)",
         "IMU:right.thigh=id_missing(req:154137)",
-        "IMU:right.shank=id_missing(req:154136)",
         "IMU:left.thigh=id_missing(req:154134)",
         "IMU:left.shank=id_missing(req:154138)"
       ]
@@ -80,7 +76,6 @@
       "missing": [
         "IMU:pelvis=id_missing(req:154135)",
         "IMU:right.thigh=id_missing(req:154137)",
-        "IMU:right.shank=id_missing(req:154136)",
         "IMU:left.thigh=id_missing(req:154134)",
         "IMU:left.shank=id_missing(req:154138)"
       ]
@@ -90,7 +85,6 @@
       "missing": [
         "IMU:pelvis=id_missing(req:154135)",
         "IMU:right.thigh=id_missing(req:154137)",
-        "IMU:right.shank=id_missing(req:154136)",
         "IMU:left.thigh=id_missing(req:193821)",
         "IMU:left.shank=id_missing(req:134959)"
       ]
@@ -99,7 +93,6 @@
       "status": 0,
       "missing": [
         "IMU:pelvis=id_missing(req:154135)",
-        "IMU:left.thigh=id_missing(req:193830)",
         "IMU:left.shank=id_missing(req:193820)"
       ]
     },
@@ -134,8 +127,8 @@
     }
   },
   "summary": {
-    "ready": 9,
-    "blocked": 11,
+    "ready": 10,
+    "blocked": 10,
     "unknown": 0
   }
 }

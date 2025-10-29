@@ -68,7 +68,7 @@ function showToast(kind, text, opts = {}) {
   };
   el.querySelector('.x').onclick = remove;
 
-  const ttl = opts.ttl ?? 3000;
+  const ttl = opts.ttl ?? 6000;
   if (ttl > 0) setTimeout(remove, ttl);
 }
 
