@@ -92,6 +92,18 @@
   <!-- TOAST ROOT (centered below header) -->
   <div id="toast-root" aria-live="polite" aria-atomic="true"></div>
 
+  <!-- Confirm modal -->
+  <div id="confirm" hidden>
+    <div class="confirm-box">
+      <h3 id="confirm-title" class="confirm-title">Run controller</h3>
+      <p id="confirm-msg" class="confirm-msg">Run “…” on the Jetson now?</p>
+      <div class="confirm-actions">
+        <button id="confirm-cancel" class="btn">Cancel</button>
+        <button id="confirm-ok" class="btn btn-run">Run</button>
+      </div>
+    </div>
+  </div>
+
   <!-- External JavaScript -->
   <script defer src="./assets/app.js"></script>
 </body>

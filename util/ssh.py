@@ -16,6 +16,10 @@ def control_path(user, host, port=22):
     return os.path.expanduser(f"~/.ssh/cm-{user}@{host}:{port}")
 
 def ensure_master(user, host, persist="60s"):
+    # Check if SSH is reachable
+    if not ssh_reachable(host):
+        print(Colors.red("[SSH] SSH not reachable"))
+        return False
     cp = control_path(user, host)
     # Check if a master is already running
     chk = run(["ssh", "-O", "check", "-S", cp, f"{user}@{host}"])
@@ -48,10 +52,6 @@ def batch_compare_and_pull(user, host):
     runs compare on Jetson, then prints both JSONs with markers.
     single SSH, single round-trip.
     """
-    if not ssh_reachable(host):
-        print(Colors.red("[SSH] SSH not reachable"))
-        return None, None
-
     cp = control_path(user, host)
     remote_cmd = (
         f"python3 {Remote_Paths.COMPARE} "
@@ -104,7 +104,7 @@ def periodic_sync(user, host, interval_sec=5):
             write_json(Local_Paths.META, meta_payload)
             
             curr = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            print(Colors.green(f"[SYNC {curr}] Updated comparison_output.json and meta.json"))
+            print(f"[SYNC {curr}] Updated comparison_output.json and meta.json")
         else:
             print(Colors.red(f"[SYNC {curr}] Update failed"))
 
@@ -116,10 +116,6 @@ def periodic_sync(user, host, interval_sec=5):
 SAFE_NAME_RE = re.compile(r'^[A-Za-z0-9_\-\.]+$')
 
 def ready_locally(name):
-    """
-    only allow running controllers that are currently READY in comparison_output.json
-    and whose name is sane (no path traversal).
-    """
     if not SAFE_NAME_RE.match(name):
         return False
     try:
@@ -146,6 +142,7 @@ def run_remote_controller(name):
 
     cp = control_path(Jetson.USER_SULLY, Jetson.HOST_SULLY)
     remote_cmd = f"cd {shlex.quote(Remote_Paths.CONTROLLERS)} && python3 {shlex.quote(normalized)}"
+    print(Colors.yellow(f"\n[SSH] Running remote controller: {normalized}\n"))
 
     r = run([
         "ssh",
@@ -156,3 +153,27 @@ def run_remote_controller(name):
     if r.returncode != 0:
         return (False, f"Remote run failed: {r.stderr.strip() or r.stdout.strip()}")
     return (True, r.stdout.strip() or "Started.")
+
+def stop_remote_controller(name):
+    """
+    Stops the named controller on Sully via pkill.
+    Returns (ok: bool, message: str).
+    """
+    normalized = name if name.endswith(".py") else f"{name}.py"
+
+    if not ensure_master(Jetson.USER_SULLY, Jetson.HOST_SULLY, persist="5m"):
+        return (False, "SSH control master not available")
+
+    cp = control_path(Jetson.USER_SULLY, Jetson.HOST_SULLY)
+    remote_cmd = f"pkill -f {shlex.quote(normalized)}"
+    print(Colors.yellow(f"\n[SSH] Stopping remote controller: {normalized}\n"))
+
+    r = run([
+        "ssh",
+        "-o", "StrictHostKeyChecking=accept-new",
+        "-S", cp, f"{Jetson.USER_SULLY}@{Jetson.HOST_SULLY}",
+        remote_cmd
+    ])
+    if r.returncode != 0:
+        return (False, f"Remote stop failed: {r.stderr.strip() or r.stdout.strip()}")
+    return (True, "Stopped.")

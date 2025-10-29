@@ -18,17 +18,19 @@ def start_static_server(root, port):
     thread.start()
     return httpd
 
-def start_api_server(on_run, host="127.0.0.1", port=8321):
+def start_api_server(on_run, on_stop, host="127.0.0.1", port=8321):
     """
     Starts a tiny HTTP server in a daemon thread.
     POST /api/run  { "name": "<controller name>" }
     """
     class Handler(BaseHTTPRequestHandler):
+        def log_message(self, format, *args):
+            return 
+        
         def _json(self, code, payload):
             body = json.dumps(payload).encode()
             self.send_response(code)
             self.send_header("Content-Type", "application/json")
-            # Allow file:// or other origins if you open the dashboard without a web server
             self.send_header("Access-Control-Allow-Origin", "*")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
@@ -43,18 +45,26 @@ def start_api_server(on_run, host="127.0.0.1", port=8321):
             self.end_headers()
 
         def do_POST(self):
-            if self.path != "/api/run":
+            length = int(self.headers.get("Content-Length") or 0)
+            raw = self.rfile.read(length) or b"{}"
+            if self.path == "/api/run":
+                try:
+                    data = json.loads(raw)
+                    name = (data.get("name") or "").strip()
+                    ok, msg = on_run(name)
+                    return self._json(200 if ok else 400, {"ok": ok, "message": msg})
+                except Exception as e:
+                    return self._json(500, {"ok": False, "message": f"Server error: {e}"})
+            elif self.path == "/api/stop":
+                try:
+                    data = json.loads(raw)
+                    name = (data.get("name") or "").strip()
+                    ok, msg = on_stop(name) 
+                    return self._json(200 if ok else 400, {"ok": ok, "message": msg})
+                except Exception as e:
+                    return self._json(500, {"ok": False, "message": f"Server error: {e}"})
+            else:
                 return self._json(404, {"ok": False, "message": "Not found"})
-            try:
-                length = int(self.headers.get("Content-Length") or 0)
-                data = json.loads(self.rfile.read(length) or b"{}")
-                name = (data.get("name") or "").strip()
-                if not name:
-                    return self._json(400, {"ok": False, "message": "Missing 'name'"})
-                ok, msg = on_run(name)
-                return self._json(200 if ok else 400, {"ok": ok, "message": msg})
-            except Exception as e:
-                return self._json(500, {"ok": False, "message": f"Server error: {e}"})
 
     srv = HTTPServer((host, port), Handler)
     t = threading.Thread(target=srv.serve_forever, daemon=True)

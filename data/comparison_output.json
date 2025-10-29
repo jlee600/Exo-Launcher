@@ -37,10 +37,8 @@
       ]
     },
     "hip_controller_COMBINED_flexible_devices.py": {
-      "status": 0,
-      "missing": [
-        "Motors=count_insufficient(req:5, got:2)"
-      ]
+      "status": 1,
+      "missing": []
     },
     "hip_controller_COMBINED_noinsole.py": {
       "status": 0,
