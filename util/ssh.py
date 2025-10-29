@@ -47,7 +47,7 @@ def close_master(user, host):
 ##############################
 BEGIN_CMP  = "__BEGIN_CMP__"
 BEGIN_META = "__BEGIN_META__"
-def batch_compare_and_pull(user, host):
+def batch_compare_and_pull(user, host, ssid):
     """
     runs compare on Jetson, then prints both JSONs with markers.
     single SSH, single round-trip.
@@ -75,7 +75,7 @@ def batch_compare_and_pull(user, host):
 
     out = r.stdout or ""
     try:
-        write_dashboard_info(user, host)
+        write_dashboard_info(user, ssid)
         _, after_cmp = out.split(BEGIN_CMP, 1)
         cmp_json_str, after_meta = after_cmp.split(BEGIN_META, 1)
         cmp_json_str = cmp_json_str.strip()
@@ -91,14 +91,14 @@ def batch_compare_and_pull(user, host):
 ##############################
 # Sync loop
 ##############################
-def periodic_sync(user, host, interval_sec=5):
+def periodic_sync(user, host, ssid, interval_sec=5):
     """
     every interval:
       - run compare remotely and fetch both JSONs in ONE ssh
       - write them locally for the dashboard
     """
     while True:
-        cmp_payload, meta_payload = batch_compare_and_pull(user, host)
+        cmp_payload, meta_payload = batch_compare_and_pull(user, host, ssid)
         if cmp_payload and meta_payload:
             write_json(Local_Paths.OUTPUT, cmp_payload)
             write_json(Local_Paths.META, meta_payload)

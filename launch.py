@@ -48,7 +48,7 @@ def main():
     signal.signal(signal.SIGTERM, _cleanup)
 
     # 5. Sync thread (Thread 3)
-    sync_thread = threading.Thread(target=periodic_sync, args=(Jetson.USER_SULLY, Jetson.HOST_SULLY, 4), daemon=True)
+    sync_thread = threading.Thread(target=periodic_sync, args=(Jetson.USER_SULLY, Jetson.HOST_SULLY, Wifi.SSID_CAREN, 4), daemon=True)
     sync_thread.start()    
 
     # Main Thread
