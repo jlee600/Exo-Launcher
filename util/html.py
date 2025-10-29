@@ -20,8 +20,9 @@ def start_static_server(root, port):
 
 def start_api_server(on_run, on_stop, host="127.0.0.1", port=8321):
     """
-    Starts a tiny HTTP server in a daemon thread.
-    POST /api/run  { "name": "<controller name>" }
+    Starts a HTTP server in a daemon thread.
+    POST /api/run  { "name": "<controller name>" } : starts the named controller.
+    POST /api/stop { "name": "<controller name>" } : stops the named controller.
     """
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, format, *args):

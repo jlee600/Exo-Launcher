@@ -23,7 +23,7 @@ def main():
         sys.exit(1)
     write_dashboard_info(Jetson.USER_SULLY, Wifi.SSID_CAREN)
 
-    # 3. API server (Thead 1)
+    # 3. API server (Thread 1)
     api = start_api_server(run_remote_controller, stop_remote_controller, host="127.0.0.1", port=HTML.API_PORT)
 
     # 4. Static server (dashboard) (Thread 2)

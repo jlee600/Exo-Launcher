@@ -275,7 +275,7 @@ function updateCard(card, data) {
       if (r.ok) {
         setRunning(ctrlName);
 
-        // disable Stop for 5 seconds after start
+        // disable Stop for 3 seconds after start
         const active = document.querySelector(`.card[data-name="${ctrlName}"] button`);
         if (active) {
           active.disabled = true;
