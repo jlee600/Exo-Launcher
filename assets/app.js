@@ -165,6 +165,14 @@ async function openFlexibleModal() {
       if (!sel) return;
       const keep = sel.value || null;
       sel.innerHTML = '';
+
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = 'Select IMU';
+      placeholder.disabled = true;
+      if (!sel.value) placeholder.selected = true;
+      sel.appendChild(placeholder);
+
       IMU_IDS.forEach(id => {
         if (!chosen.has(String(id)) || String(id) === String(keep)) {
           const opt = document.createElement('option');
@@ -180,15 +188,55 @@ async function openFlexibleModal() {
   imuSelects.forEach(s => s && s.addEventListener('change', populateImuSelects));
   populateImuSelects();
 
-  function validateIMUs() {
-    const vals = imuSelects.map(s => s?.value).filter(Boolean);
-    const ok = vals.length === imuSelects.length && new Set(vals).size === vals.length;
-    if (f_ok) f_ok.disabled = !ok;
-    imuSelects.forEach(s => s && s.classList.toggle('is-invalid', !ok));
-    return ok;
+  let showHints = false;            // only paint red when true
+  const touched = new WeakSet();    // track user interaction per select
+
+  function validateIMUs(paint = showHints) {
+    const vals = imuSelects.map(s => s.value).filter(v => v !== '');
+    const allChosen = vals.length === imuSelects.length;
+    const unique = new Set(vals).size === vals.length;
+
+    // clear any previous paint
+    if (paint) imuSelects.forEach(s => s.classList.remove('is-invalid'));
+
+    if (paint) {
+      // mark empty only if the user touched it or we're in submit mode
+      imuSelects.forEach(s => {
+        if (s.value === '' && (showHints || touched.has(s))) s.classList.add('is-invalid');
+      });
+      // mark duplicates (both ends)
+      if (vals.length) {
+        const seen = new Map();
+        imuSelects.forEach(s => {
+          const v = s.value;
+          if (!v) return;
+          if (seen.has(v)) {
+            s.classList.add('is-invalid');
+            seen.get(v).classList.add('is-invalid');
+          } else {
+            seen.set(v, s);
+          }
+        });
+      }
+    }
+
+    f_ok.disabled = !(allChosen && unique);
+    return allChosen && unique;
   }
-  imuSelects.forEach(s => s && s.addEventListener('change', validateIMUs));
-  validateIMUs();
+
+  // listeners: don’t paint red on first open; mark field as touched after focus/change
+  imuSelects.forEach(s => {
+    s.addEventListener('focus', () => touched.add(s));
+    s.addEventListener('change', () => {
+      touched.add(s);
+      // keep options mutually exclusive and revalidate without painting
+      populateImuSelects();
+      validateIMUs(false);
+    });
+  });
+
+  // initial neutral validation (no red)
+  validateIMUs(false);
 
   // 3) Motors: dropdown IDs only; type is read-only below
   function syncType(sel, out) { out.textContent = MOTOR_TYPES.get(Number(sel.value)) || '—'; }
@@ -196,6 +244,16 @@ async function openFlexibleModal() {
     const prev = keepValue ?? selectEl.value ?? null;
     selectEl.innerHTML = '';
     const frag = document.createDocumentFragment();
+
+    // default placeholder
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = 'Select Motor';
+    placeholder.disabled = true;
+    if (!prev) placeholder.selected = true;
+    frag.appendChild(placeholder);
+
+    // real options
     for (const [id] of MOTOR_TYPES.entries()) {
       if (excludeId != null && String(id) === String(excludeId) && String(id) !== String(prev)) continue;
       const opt = document.createElement('option');
