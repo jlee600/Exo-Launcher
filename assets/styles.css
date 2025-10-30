@@ -285,6 +285,10 @@
     box-shadow: 0 0 0 3px rgba(239,68,68,.15);
   }
   
+  .flex-actions-row{display:flex;gap:8px;margin-top:10px}
+  .btn-ghost{background:transparent;border:1px solid var(--border);padding:6px 10px;border-radius:8px}
+  .btn-ghost:hover{background:var(--gray-100)}
+  
   /* responsive */
   @media (max-width:900px) {
     html, body { height: auto; overflow: auto; }

@@ -276,7 +276,64 @@ async function openFlexibleModal() {
   refreshMotorSelects();
 
   xsens.checked = true;
+  
+  // Reset IMUs 
+  const btnResetIMU = wrap.querySelector('#flex-reset-imu');
+  if (btnResetIMU) {
+    btnResetIMU.onclick = (e) => {
+      e.preventDefault();
 
+      imuSelects.forEach(sel => {
+        sel.innerHTML = '';
+
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Select IMU';
+        placeholder.selected = true;
+        placeholder.disabled = false;
+        sel.appendChild(placeholder);
+
+        IMU_IDS.forEach(id => {
+          const opt = document.createElement('option');
+          opt.value = String(id);
+          opt.textContent = String(id);
+          sel.appendChild(opt);
+        });
+      });
+
+      validateIMUs(false);
+    };
+  }
+
+  // Reset Motors
+  const btnResetMotors = wrap.querySelector('#flex-reset-motors');
+  if (btnResetMotors) {
+    btnResetMotors.onclick = (e) => {
+      e.preventDefault();
+
+      [leftId, rightId].forEach(sel => {
+        sel.innerHTML = '';
+
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Select Motor';
+        placeholder.selected = true;
+        placeholder.disabled = false;
+        sel.appendChild(placeholder);
+
+        for (const [id] of MOTOR_TYPES.entries()) {
+          const opt = document.createElement('option');
+          opt.value = String(id);
+          opt.textContent = String(id);
+          sel.appendChild(opt);
+        }
+      });
+
+      leftTy.textContent = '—';
+      rightTy.textContent = '—';
+      validateIMUs(false);
+    };
+  }
   // 4) Promise for modal
   return new Promise((resolve) => {
     const close = () => { wrap.hidden = true; FLEX_MODAL_OPEN = false; };
