@@ -104,6 +104,63 @@
     </div>
   </div>
 
+  <!-- Flexible config modal -->
+  <div id="flex-modal" hidden>
+    <div class="flex-box">
+      <h3 class="flex-title">Flexible Controller - Devices</h3>
+  
+      <section class="flex-section">
+        <h4>IMU IDs</h4>
+        <div class="flex-imu-grid">
+          <label>Pelvis <input id="flex-imu-pelvis" type="number"/></label>
+          <label>Right Thigh <input id="flex-imu-right-thigh" type="number"/></label>
+          <label>Right Shank <input id="flex-imu-right-shank" type="number"/></label>
+          <label>Left Thigh <input id="flex-imu-left-thigh" type="number"/></label>
+          <label>Left Shank <input id="flex-imu-left-shank" type="number"/></label>
+        </div>
+      </section>
+  
+      <section class="flex-section">
+        <h4>Motors</h4>
+        <div class="flex-motor-grid">
+          <div class="motor-col">
+            <h5>Left Hip</h5>
+            <label class="fld">
+              <span class="lbl">Motor ID</span>
+              <select id="flex-motor-left-id"></select>
+            </label>
+            <label class="fld">
+              <span class="lbl">Type</span>
+              <div id="flex-motor-left-type" class="ro-field">—</div>
+            </label>
+          </div>
+      
+          <div class="motor-col">
+            <h5>Right Hip</h5>
+            <label class="fld">
+              <span class="lbl">Motor ID</span>
+              <select id="flex-motor-right-id"></select>
+            </label>
+            <label class="fld">
+              <span class="lbl">Type</span>
+              <div id="flex-motor-right-type" class="ro-field">—</div>
+            </label>
+          </div>
+        </div>
+      </section>
+  
+      <label class="flex-xsens">
+        <input type="checkbox" id="flex-xsensors" />
+        Use Xsensors (insoles)
+      </label>
+  
+      <div class="flex-actions">
+        <button id="flex-cancel" class="btn btn-secondary">Cancel</button>
+        <button id="flex-ok" class="btn btn-primary">Run</button>
+      </div>
+    </div>
+  </div>
+
   <!-- External JavaScript -->
   <script defer src="./assets/app.js"></script>
 </body>
