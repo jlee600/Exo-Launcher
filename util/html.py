@@ -18,11 +18,12 @@ def start_static_server(root, port):
     thread.start()
     return httpd
 
-def start_api_server(on_run, on_stop, host="127.0.0.1", port=8321):
+def start_api_server(on_run, on_flex, on_stop, host="127.0.0.1", port=8321):
     """
     Starts a HTTP server in a daemon thread.
     POST /api/run  { "name": "<controller name>" } : starts the named controller.
     POST /api/stop { "name": "<controller name>" } : stops the named controller.
+    POST /api/flexible-run { "name": "<controller name>" } : starts the flexible controller.
     """
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, format, *args):
@@ -53,6 +54,14 @@ def start_api_server(on_run, on_stop, host="127.0.0.1", port=8321):
                     data = json.loads(raw)
                     name = (data.get("name") or "").strip()
                     ok, msg = on_run(name)
+                    return self._json(200 if ok else 400, {"ok": ok, "message": msg})
+                except Exception as e:
+                    return self._json(500, {"ok": False, "message": f"Server error: {e}"})
+            elif self.path == "/api/flexible-run":
+                try:
+                    data = json.loads(raw)
+                    name = (data.get("name") or "").strip()
+                    ok, msg = on_flex(name) 
                     return self._json(200 if ok else 400, {"ok": ok, "message": msg})
                 except Exception as e:
                     return self._json(500, {"ok": False, "message": f"Server error: {e}"})

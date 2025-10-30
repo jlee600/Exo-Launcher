@@ -2,7 +2,7 @@ import sys, platform, signal, webbrowser, threading, time
 from config import Wifi, Jetson, Colors, Local_Paths, HTML
 from util.html import start_static_server, start_api_server
 from util.utils import write_dashboard_info
-from util.ssh import ensure_master, close_master, periodic_sync, run_remote_controller, stop_remote_controller
+from util.ssh import ensure_master, close_master, periodic_sync, run_remote_controller, stop_remote_controller, run_flexible_controller
 from util.wifi import connect_wifi
 
 def main():
@@ -24,7 +24,7 @@ def main():
     write_dashboard_info(Jetson.USER_SULLY, Wifi.SSID_CAREN)
 
     # 3. API server (Thread 1)
-    api = start_api_server(run_remote_controller, stop_remote_controller, host="127.0.0.1", port=HTML.API_PORT)
+    api = start_api_server(on_run=run_remote_controller, on_flex=run_flexible_controller, on_stop=stop_remote_controller, host="127.0.0.1", port=HTML.API_PORT)
 
     # 4. Static server (dashboard) (Thread 2)
     httpd = start_static_server(Local_Paths.ROOT, port = HTML.POLL_PORT)

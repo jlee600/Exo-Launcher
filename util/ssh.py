@@ -1,6 +1,6 @@
 import os, socket, json, time, datetime, re, shlex
-from config import Remote_Paths, Colors, Local_Paths, Jetson, SpecialControllers
-from util.utils import run, write_json, write_dashboard_info
+from config import Remote_Paths, Colors, Local_Paths, Jetson
+from util.utils import run, write_json, write_dashboard_info, write_flexible_config
 
 ##############################
 # SSH control master helpers
@@ -134,8 +134,8 @@ def run_remote_controller(name):
     """
     normalized = name if name.endswith(".py") else f"{name}.py"
 
-    if (not ready_locally(normalized) and normalized not in SpecialControllers.ALLOWED and name not in SpecialControllers.ALLOWED):
-        return (False, f"Blocked or unknown controller: {normalized}")
+    if not ready_locally(normalized):
+        return (False, f"Unknown controller: {normalized}")
 
     if not ensure_master(Jetson.USER_SULLY, Jetson.HOST_SULLY, persist="5m"):
         return (False, "SSH control master not available")
@@ -156,6 +156,61 @@ def run_remote_controller(name):
     
     print(Colors.green(f"[SSH] Remote controller started:\n{r.stdout}"))
     return (True, r.stdout.strip() or "Started.")
+
+def run_flexible_controller(config):
+    """
+    Writes the provided config JSON locally and to the Jetson, then runs
+    hip_controller_COMBINED_flexible_devices.py remotely via SSH.
+
+    Steps:
+      1. Save config to local data/flexible_config.json
+      2. Copy it to Jetson: ../hip-exo-controllers/readiness/flexible_config.json
+      3. Run the controller on Jetson
+    """
+    script_name = "hip_controller_COMBINED_flexible_devices.py"
+    local_path = Local_Paths.FLEX
+    remote_path = Remote_Paths.FLEX_CONFIG
+    
+    # 1. Write locally
+    if not write_flexible_config(config):
+        return (False, "Failed to write local flexible config")
+
+    # 2. Ensure SSH master
+    if not ensure_master(Jetson.USER_SULLY, Jetson.HOST_SULLY, persist="5m"):
+        return (False, "SSH control master not available")
+    
+    cp = control_path(Jetson.USER_SULLY, Jetson.HOST_SULLY)
+
+    # 3. Copy to Jetson
+    scp_cmd = [
+        "scp",
+        "-o", "StrictHostKeyChecking=accept-new",
+        "-S", cp,
+        local_path,
+        f"{Jetson.USER_SULLY}@{Jetson.HOST_SULLY}:{remote_path}"
+    ]
+    r = run(scp_cmd)
+    if r.returncode != 0:
+        print(Colors.red(f"[SSH] SCP failed:\n{r.stderr}"))
+        return (False, f"Failed to copy config to Jetson: {r.stderr.strip() or r.stdout.strip()}")
+    print(Colors.green(f"[SSH] Copied flexible config to Jetson: {remote_path}"))
+
+    # 4. Run controller on Jetson
+    remote_cmd = f"cd {shlex.quote(Remote_Paths.CONTROLLERS)} && python3 {script_name}"
+    print(Colors.yellow(f"[SSH] Running {script_name} on Jetson..."))
+
+    r = run([
+        "ssh",
+        "-o", "StrictHostKeyChecking=accept-new",
+        "-S", cp, f"{Jetson.USER_SULLY}@{Jetson.HOST_SULLY}",
+        remote_cmd
+    ])
+    if r.returncode != 0:
+        print(Colors.red(f"[SSH] Remote run failed:\n{r.stderr}"))
+        return (False, f"Failed to run remote controller: {r.stderr.strip() or r.stdout.strip()}")
+
+    print(Colors.green(f"[SSH] Flexible controller started successfully"))
+    return (True, "Flexible controller started successfully")
 
 def stop_remote_controller(name):
     """

@@ -1,5 +1,5 @@
 import os, subprocess, json, datetime
-from config import Jetson, Local_Paths
+from config import Jetson, Local_Paths, Colors
 
 def run(cmd):
     return subprocess.run(cmd, text=True, capture_output=True)
@@ -22,3 +22,12 @@ def write_dashboard_info(user, ssid):
     }
     write_json(os.path.join(Local_Paths.DATA_DIR, "dash_info.json"), dashboard_info)
     # print("[INFO] Dashboard info written.")
+
+def write_flexible_config(config):
+    try:
+        write_json(Local_Paths.FLEX, config)
+        print(Colors.green(f"\n[INFO] Flexible config written to {Local_Paths.FLEX}\n"))
+        return True
+    except Exception as e:
+        print(Colors.red(f"\n[ERROR] Failed to write flexible config: {e}\n"))
+        return False
