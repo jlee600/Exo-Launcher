@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Exo Launcher — Select Jetson</title>
+  <link rel="stylesheet" href="assets/login.css" />
+</head>
+<body>
+  <div class="card">
+    <h1>Select Jetson</h1>
+
+    <!-- Existing profile (full width) -->
+    <div class="field">
+      <label for="sel">Existing profile</label>
+      <select id="sel"></select>
+    </div>
+
+    <!-- New profile name (full width, its own row) -->
+    <div class="field">
+      <label for="name">New profile name</label>
+      <input id="name" placeholder="e.g., sully" />
+    </div>
+
+    <!-- SSH user (full width, its own row) -->
+    <div class="field">
+      <label for="user">SSH user</label>
+      <input id="user" placeholder="ubuntu" />
+    </div>
+
+    <!-- Host (full width) -->
+    <div class="field">
+      <label for="host">Host</label>
+      <input id="host" placeholder="192.168.x.x" />
+    </div>
+
+    <div class="actions">
+      <button id="test">Test</button>
+      <button id="save">Save</button>
+      <button id="login">Login</button>
+    </div>
+
+    <div id="msg"></div>
+  </div>
+
+  <script src="assets/login.js"></script>
+</body>
+</html>
