@@ -35,12 +35,6 @@ def on_login(profile_name, user, host):
         _sync_thread = threading.Thread(target=periodic_sync, args=(user, host, Wifi.SSID_CAREN, 4), daemon=True)
         _sync_thread.start()
 
-    url = f"http://127.0.0.1:{HTML.POLL_PORT}/dashboard.html"
-    try:
-        webbrowser.open_new_tab(url)
-    except Exception:
-        pass
-
 def get_active_connection():
     """Return (user, host) if login occurred, else (None, None)."""
     return _active_user, _active_host
