@@ -61,7 +61,8 @@ def start_api_server(on_run, on_flex, on_stop, host="127.0.0.1", port=8321):
                 try:
                     data = json.loads(raw)
                     name = (data.get("name") or "").strip()
-                    ok, msg = on_flex(name) 
+                    config = (data.get("config"))
+                    ok, msg = on_flex(name, config) 
                     return self._json(200 if ok else 400, {"ok": ok, "message": msg})
                 except Exception as e:
                     return self._json(500, {"ok": False, "message": f"Server error: {e}"})

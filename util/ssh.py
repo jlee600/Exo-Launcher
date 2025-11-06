@@ -65,10 +65,10 @@ def batch_compare_and_pull(user, host, ssid):
     r = run([
         "ssh",
         "-o", "StrictHostKeyChecking=accept-new",
-        "-S", cp, f"{user}@{host}",
+        "-o", f"ControlPath={cp}",
+        f"{Jetson.USER_SULLY}@{Jetson.HOST_SULLY}",
         remote_cmd
     ])
-
     if r.returncode != 0:
         print(Colors.red(f"[SSH] Remote batch failed:\n{r.stderr}"))
         return None, None
@@ -99,11 +99,12 @@ def periodic_sync(user, host, ssid, interval_sec=5):
     """
     while True:
         cmp_payload, meta_payload = batch_compare_and_pull(user, host, ssid)
+        curr = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         if cmp_payload and meta_payload:
             write_json(Local_Paths.OUTPUT, cmp_payload)
             write_json(Local_Paths.META, meta_payload)
             
-            curr = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             print(f"[SYNC {curr}] Updated comparison_output.json and meta.json")
         else:
             print(Colors.red(f"[SYNC {curr}] Update failed"))
@@ -147,7 +148,8 @@ def run_remote_controller(name):
     r = run([
         "ssh",
         "-o", "StrictHostKeyChecking=accept-new",
-        "-S", cp, f"{Jetson.USER_SULLY}@{Jetson.HOST_SULLY}",
+        "-o", f"ControlPath={cp}",
+        f"{Jetson.USER_SULLY}@{Jetson.HOST_SULLY}",
         remote_cmd
     ])
     if r.returncode != 0:
@@ -157,17 +159,16 @@ def run_remote_controller(name):
     print(Colors.green(f"[SSH] Remote controller started:\n{r.stdout}"))
     return (True, r.stdout.strip() or "Started.")
 
-def run_flexible_controller(config):
+def run_flexible_controller(name, config):
     """
     Writes the provided config JSON locally and to the Jetson, then runs
-    hip_controller_COMBINED_flexible_devices.py remotely via SSH.
+    <name>.py remotely via SSH.
 
     Steps:
       1. Save config to local data/flexible_config.json
       2. Copy it to Jetson: ../hip-exo-controllers/readiness/flexible_config.json
       3. Run the controller on Jetson
     """
-    script_name = "hip_controller_COMBINED_flexible_devices.py"
     local_path = Local_Paths.FLEX
     remote_path = Remote_Paths.FLEX_CONFIG
     
@@ -182,27 +183,27 @@ def run_flexible_controller(config):
     cp = control_path(Jetson.USER_SULLY, Jetson.HOST_SULLY)
 
     # 3. Copy to Jetson
-    scp_cmd = [
+    r = run([
         "scp",
         "-o", "StrictHostKeyChecking=accept-new",
-        "-S", cp,
+        "-o", f"ControlPath={cp}",
         local_path,
         f"{Jetson.USER_SULLY}@{Jetson.HOST_SULLY}:{remote_path}"
-    ]
-    r = run(scp_cmd)
+    ])
     if r.returncode != 0:
         print(Colors.red(f"[SSH] SCP failed:\n{r.stderr}"))
         return (False, f"Failed to copy config to Jetson: {r.stderr.strip() or r.stdout.strip()}")
     print(Colors.green(f"[SSH] Copied flexible config to Jetson: {remote_path}"))
 
     # 4. Run controller on Jetson
-    remote_cmd = f"cd {shlex.quote(Remote_Paths.CONTROLLERS)} && python3 {script_name}"
-    print(Colors.yellow(f"[SSH] Running {script_name} on Jetson..."))
+    remote_cmd = f"cd {shlex.quote(Remote_Paths.CONTROLLERS)} && python3 {shlex.quote(name)}"
+    print(Colors.yellow(f"[SSH] Running {name} on Jetson..."))
 
     r = run([
         "ssh",
         "-o", "StrictHostKeyChecking=accept-new",
-        "-S", cp, f"{Jetson.USER_SULLY}@{Jetson.HOST_SULLY}",
+        "-o", f"ControlPath={cp}",
+        f"{Jetson.USER_SULLY}@{Jetson.HOST_SULLY}",
         remote_cmd
     ])
     if r.returncode != 0:
@@ -229,7 +230,8 @@ def stop_remote_controller(name):
     r = run([
         "ssh",
         "-o", "StrictHostKeyChecking=accept-new",
-        "-S", cp, f"{Jetson.USER_SULLY}@{Jetson.HOST_SULLY}",
+        "-o", f"ControlPath={cp}",
+        f"{Jetson.USER_SULLY}@{Jetson.HOST_SULLY}",
         remote_cmd
     ])
     if r.returncode != 0:

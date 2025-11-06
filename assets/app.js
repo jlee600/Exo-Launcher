@@ -381,7 +381,7 @@ async function requestRun(name) {
 async function requestFlexibleRun(scriptName, config) {
   if (MOCK_APIS) { await new Promise(r => setTimeout(r, 200)); showToast('success', `Config saved to ${FLEX_LOCAL_PATH}`); await new Promise(r => setTimeout(r, 200)); showToast('success', `Started: ${scriptName}`); return { ok: true }; }
   try {
-    const res = await fetch(FLEX_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(config) });
+    const res = await fetch(FLEX_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: scriptName, config: config}) });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data.ok === false) throw new Error(data.message || `HTTP ${res.status}`);
     showToast('success', `Started: ${scriptName}`); return { ok: true };
