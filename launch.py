@@ -1,7 +1,7 @@
-import sys, platform, signal, webbrowser, threading, time
-from config import Wifi, Jetson, Colors, Local_Paths, HTML
+import sys, platform, signal, webbrowser, time
+from config import Wifi, Colors, Local_Paths, HTML
 from util.html import start_static_server, start_api_server
-from util.login import on_login, close_active_master
+from util.login import on_login, close_active_master, set_active_ssid
 from util.ssh import run_remote_controller, stop_remote_controller, run_flexible_controller
 from util.wifi import connect_wifi
 
@@ -11,11 +11,17 @@ def main():
     print(Colors.green(f"Detected OS: {_os}\n"))
 
     # wifi
+    ssid_used = None
     print(Colors.green("[WIFI] Connecting to Wi-Fi: Overground"))
-    if not connect_wifi(sys_os, Wifi.SSID_OVG, Wifi.PASS_OVG, Wifi.IP_OVG):
+    if connect_wifi(sys_os, Wifi.SSID_OVG, Wifi.PASS_OVG, Wifi.IP_OVG):
+        ssid_used = Wifi.SSID_OVG
+    else:
         print(Colors.green("[WIFI] Connecting to Wi-Fi: Caren_5G"))
-        if not connect_wifi(sys_os, Wifi.SSID_CAREN, Wifi.PASS_CAREN, Wifi.IP_CAREN):
+        if connect_wifi(sys_os, Wifi.SSID_CAREN, Wifi.PASS_CAREN, Wifi.IP_CAREN):
+            ssid_used = Wifi.SSID_CAREN
+        else:
             sys.exit(1)
+    set_active_ssid(ssid_used)
 
     print(Colors.green("\n[SSH] Waiting for Jetson login selection...\n"))
 
