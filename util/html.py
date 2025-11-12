@@ -41,8 +41,8 @@ def start_api_server(on_run, on_flex, on_stop, on_login=None, host="127.0.0.1", 
       POST /api/login          { name }          -> { ok }
     """
     class Handler(BaseHTTPRequestHandler):
-        def log_message(self, format, *args):
-            return
+        # def log_message(self, format, *args):
+        #     return
 
         # ---- tiny helpers ----
         def _json(self, code, payload):
