@@ -134,7 +134,11 @@ def start_api_server(on_run, on_flex, on_stop, on_login=None, host="127.0.0.1", 
                 try:
                     data = json.loads(raw)
                     ctrl_name = (data.get("name") or "").strip()
-                    _, user, host = get_active()
+                    # _, user, host = get_active()
+                    active = get_active()
+                    if not active:
+                        return self._json(400, {"ok": False, "message": "No active profile"})
+                    _, user, host = active
                     ok, msg = on_run(ctrl_name, user, host)
                     return self._json(200 if ok else 400, {"ok": ok, "message": msg})
                 except Exception as e:
@@ -146,7 +150,10 @@ def start_api_server(on_run, on_flex, on_stop, on_login=None, host="127.0.0.1", 
                     data = json.loads(raw)
                     ctrl_name = (data.get("name") or "").strip()
                     cfg = data.get("config")
-                    _, user, host = get_active()
+                    active = get_active()
+                    if not active:
+                        return self._json(400, {"ok": False, "message": "No active profile"})
+                    _, user, host = active
                     ok, msg = on_flex(ctrl_name, cfg, user, host)
                     return self._json(200 if ok else 400, {"ok": ok, "message": msg})
                 except Exception as e:
@@ -157,7 +164,10 @@ def start_api_server(on_run, on_flex, on_stop, on_login=None, host="127.0.0.1", 
                 try:
                     data = json.loads(raw)
                     ctrl_name = (data.get("name") or "").strip()
-                    _, user, host = get_active()
+                    active = get_active()
+                    if not active:
+                        return self._json(400, {"ok": False, "message": "No active profile"})
+                    _, user, host = active
                     ok, msg = on_stop(ctrl_name, user, host)
                     return self._json(200 if ok else 400, {"ok": ok, "message": msg})
                 except Exception as e:

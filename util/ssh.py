@@ -1,5 +1,5 @@
 import os, socket, json, time, datetime, re, shlex
-from config import Remote_Paths, Colors, Local_Paths, Jetson
+from config import Remote_Paths, Colors, Local_Paths
 from util.utils import run, write_json, write_dashboard_info, write_flexible_config
 
 ##############################
@@ -28,9 +28,11 @@ def ensure_master(user, host, persist="60s"):
     # Start a new master in the background
     print(Colors.yellow("[SSH] Starting SSH control master..."))
     r = run([
-        "ssh", "-M", "-N", "-f",
+       "ssh", "-M", "-N", "-f",
         "-o", f"ControlPath={cp}",
-        "-o", f"ControlPersist={persist}",
+        "-o", f"ControlPersist={persist}", 
+        "-o", "StrictHostKeyChecking=accept-new",
+        "-o", "ConnectTimeout=5",
         f"{user}@{host}",
     ])
     if r.returncode != 0:
@@ -66,7 +68,7 @@ def batch_compare_and_pull(user, host, ssid):
         "ssh",
         "-o", "StrictHostKeyChecking=accept-new",
         "-o", f"ControlPath={cp}",
-        f"{Jetson.USER_SULLY}@{Jetson.HOST_SULLY}",
+        f"{user}@{host}",
         remote_cmd
     ])
     if r.returncode != 0:
@@ -75,7 +77,7 @@ def batch_compare_and_pull(user, host, ssid):
 
     out = r.stdout or ""
     try:
-        write_dashboard_info(user, ssid)
+        write_dashboard_info(user, ssid, host)
         _, after_cmp = out.split(BEGIN_CMP, 1)
         cmp_json_str, after_meta = after_cmp.split(BEGIN_META, 1)
         cmp_json_str = cmp_json_str.strip()
@@ -128,7 +130,7 @@ def ready_locally(name):
     except Exception:
         return False
 
-def run_remote_controller(name):
+def run_remote_controller(name, user, host):
     """
     Runs the named controller on Sully via the SSH control master.
     Returns (ok: bool, message: str).
@@ -138,10 +140,10 @@ def run_remote_controller(name):
     if not ready_locally(normalized):
         return (False, f"Unknown controller: {normalized}")
 
-    if not ensure_master(Jetson.USER_SULLY, Jetson.HOST_SULLY, persist="5m"):
+    if not ensure_master(user, host, persist="5m"):
         return (False, "SSH control master not available")
 
-    cp = control_path(Jetson.USER_SULLY, Jetson.HOST_SULLY)
+    cp = control_path(user, host)
     remote_cmd = f"cd {shlex.quote(Remote_Paths.CONTROLLERS)} && python3 {shlex.quote(normalized)}"
     print(Colors.yellow(f"\n[SSH] Running remote controller: {normalized}"))
 
@@ -149,7 +151,7 @@ def run_remote_controller(name):
         "ssh",
         "-o", "StrictHostKeyChecking=accept-new",
         "-o", f"ControlPath={cp}",
-        f"{Jetson.USER_SULLY}@{Jetson.HOST_SULLY}",
+        f"{user}@{host}",
         remote_cmd
     ])
     if r.returncode != 0:
@@ -159,7 +161,7 @@ def run_remote_controller(name):
     print(Colors.green(f"[SSH] Remote controller started:\n{r.stdout}"))
     return (True, r.stdout.strip() or "Started.")
 
-def run_flexible_controller(name, config):
+def run_flexible_controller(name, config, user, host):
     """
     Writes the provided config JSON locally and to the Jetson, then runs
     <name>.py remotely via SSH.
@@ -177,10 +179,10 @@ def run_flexible_controller(name, config):
         return (False, "Failed to write local flexible config")
 
     # 2. Ensure SSH master
-    if not ensure_master(Jetson.USER_SULLY, Jetson.HOST_SULLY, persist="5m"):
+    if not ensure_master(user, host, persist="5m"):
         return (False, "SSH control master not available")
     
-    cp = control_path(Jetson.USER_SULLY, Jetson.HOST_SULLY)
+    cp = control_path(user, host)
 
     # 3. Copy to Jetson
     r = run([
@@ -188,7 +190,7 @@ def run_flexible_controller(name, config):
         "-o", "StrictHostKeyChecking=accept-new",
         "-o", f"ControlPath={cp}",
         local_path,
-        f"{Jetson.USER_SULLY}@{Jetson.HOST_SULLY}:{remote_path}"
+        f"{user}@{host}:{remote_path}"
     ])
     if r.returncode != 0:
         print(Colors.red(f"[SSH] SCP failed:\n{r.stderr}"))
@@ -203,7 +205,7 @@ def run_flexible_controller(name, config):
         "ssh",
         "-o", "StrictHostKeyChecking=accept-new",
         "-o", f"ControlPath={cp}",
-        f"{Jetson.USER_SULLY}@{Jetson.HOST_SULLY}",
+        f"{user}@{host}",
         remote_cmd
     ])
     if r.returncode != 0:
@@ -213,17 +215,17 @@ def run_flexible_controller(name, config):
     print(Colors.green(f"[SSH] Flexible controller started successfully"))
     return (True, "Flexible controller started successfully")
 
-def stop_remote_controller(name):
+def stop_remote_controller(name, user, host):
     """
     Stops the named controller on Sully via pkill.
     Returns (ok: bool, message: str).
     """
     normalized = name if name.endswith(".py") else f"{name}.py"
 
-    if not ensure_master(Jetson.USER_SULLY, Jetson.HOST_SULLY, persist="5m"):
+    if not ensure_master(user, host, persist="5m"):
         return (False, "SSH control master not available")
 
-    cp = control_path(Jetson.USER_SULLY, Jetson.HOST_SULLY)
+    cp = control_path(user, host)
     remote_cmd = f"pkill -f {shlex.quote(normalized)}"
     print(Colors.yellow(f"\n[SSH] Stopping remote controller: {normalized}"))
 
@@ -231,7 +233,7 @@ def stop_remote_controller(name):
         "ssh",
         "-o", "StrictHostKeyChecking=accept-new",
         "-o", f"ControlPath={cp}",
-        f"{Jetson.USER_SULLY}@{Jetson.HOST_SULLY}",
+        f"{user}@{host}",
         remote_cmd
     ])
     if r.returncode != 0:

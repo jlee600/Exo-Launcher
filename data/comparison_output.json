@@ -37,9 +37,7 @@
     },
     "hip_controller_COMBINED_flexible_devices.py": {
       "status": 1,
-      "missing": [
-
-      ]
+      "missing": []
     },
     "hip_controller_COMBINED_noinsole.py": {
       "status": 0,
@@ -59,8 +57,10 @@
       "missing": []
     },
     "hip_controller_COMBINED_noinsole_BO_v3.py": {
-      "status": 1,
-      "missing": []
+      "status": 0,
+      "missing": [
+        "IMU:left.thigh=id_missing(req:193830)"
+      ]
     },
     "hip_controller_COMBINED_noinsole_BO_v4.py": {
       "status": 0,
@@ -93,6 +93,7 @@
       "status": 0,
       "missing": [
         "IMU:pelvis=id_missing(req:154135)",
+        "IMU:left.thigh=id_missing(req:193830)",
         "IMU:left.shank=id_missing(req:193820)"
       ]
     },

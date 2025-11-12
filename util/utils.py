@@ -1,5 +1,5 @@
 import os, subprocess, json, datetime
-from config import Jetson, Local_Paths, Colors
+from config import Local_Paths, Colors
 
 def run(cmd):
     return subprocess.run(cmd, text=True, capture_output=True)
@@ -14,9 +14,9 @@ def write_json(path, payload):
     with open(path, "w") as f:
         json.dump(payload, f, indent=2)
 
-def write_dashboard_info(user, ssid):
+def write_dashboard_info(user, ssid, host):
     dashboard_info = {
-        "JetsonHost": f"{user}: {Jetson.HOST_SULLY}",
+        "JetsonHost": f"{user}: {host}",
         "WiFi": f"{ssid}",  
         "LastUpdated": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }

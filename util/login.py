@@ -29,7 +29,7 @@ def on_login(profile_name, user, host):
     _active_user, _active_host = user, host
 
     ssid = _active_ssid or "Unknown"
-    write_dashboard_info(user, ssid)
+    write_dashboard_info(user, ssid, host)
 
     if _sync_thread is None or not _sync_thread.is_alive():
         _sync_thread = threading.Thread(target=periodic_sync, args=(user, host, Wifi.SSID_CAREN, 4), daemon=True)
