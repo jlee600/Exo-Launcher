@@ -33,7 +33,7 @@ def ensure_master(user, host, persist="60s"):
         "-o", f"ControlPersist={persist}", 
         "-o", "StrictHostKeyChecking=accept-new",
         "-o", "ConnectTimeout=5",
-        f"{user}@{host}",
+        f"{user}@{host}"
     ])
     if r.returncode != 0:
         print(Colors.red(f"[SSH] Failed to start control master:\n{r.stderr}"))
@@ -198,7 +198,15 @@ def run_flexible_controller(name, config, user, host):
     print(Colors.green(f"[SSH] Copied flexible config to Jetson: {remote_path}"))
 
     # 4. Run controller on Jetson
-    remote_cmd = f"cd {shlex.quote(Remote_Paths.CONTROLLERS)} && python3 {shlex.quote(name)}"
+    # remote_cmd = f"conda init && conda activate sully && cd {shlex.quote(Remote_Paths.CONTROLLERS)} && python3 {shlex.quote(name)}"
+    #TODO do not hardcode sully
+    remote_cmd = (
+        "source /etc/profile.d/conda.sh && "
+        "conda env list && "
+        "conda activate /home/sully/miniconda3/envs/sully"
+        # f"cd {shlex.quote(Remote_Paths.CONTROLLERS)} && "
+        # f"python {shlex.quote(name)}"
+    )
     print(Colors.yellow(f"[SSH] Running {name} on Jetson..."))
 
     r = run([

@@ -1,22 +1,22 @@
 {
-    "IMUs": {
-        "pelvis": 154135,
-        "right.thigh": 154137,
-        "right.shank": 154136,
-        "left.thigh": 156123,
-        "left.shank": 154138
+  "IMUs": {
+    "pelvis": 154134,
+    "right.thigh": 154135,
+    "right.shank": 154136,
+    "left.thigh": 154137,
+    "left.shank": 154138
+  },
+  "Xsensors": false,
+  "Motors": {
+    "right.hip": {
+      "motor_id": 4,
+      "motor_type": "AK80-9",
+      "is_inverted": false
     },
-    "Xsensors": true,
-    "Motors": {
-        "right.hip": {
-            "motor_id": 4,
-            "motor_type": "AK80-9",
-            "is_inverted": false
-        },
-        "left.hip": {
-            "motor_id": 2,
-            "motor_type": "AK80-9",
-            "is_inverted": true
-        }
+    "left.hip": {
+      "motor_id": 2,
+      "motor_type": "AK80-9",
+      "is_inverted": true
     }
+  }
 }
