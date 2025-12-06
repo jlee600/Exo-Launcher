@@ -1,6 +1,6 @@
 # Exo-Launcher
 ## Overview
-<img src="dashboard.png" width="1000" alt="Dashboard UI Placeholder"/>
+<img src="assets/dashboard.png" width="1000" alt="Dashboard UI Placeholder"/>
 
 - **Exo-Launcher** is an end-to-end system designed and developed as a Research Assistant & Software Engineer in Dr. Young’s *Exoskeleton and Prosthetic Intelligent Controls (EPIC) Lab*. 
 - The tool provides a unified workflow for operating remote NVIDIA Jetson-based hip-exo controllers by combining automated Wi-Fi orchestration, SSH ControlMaster session management, profile handling, and real-time telemetry visualization. 
@@ -41,10 +41,9 @@ EXO-LAUNCHER/
 ### 5. Operational Reliability
 - Graceful shutdown: closes ControlMaster, thread, and servers  
 - Robust error handling across SSH, network, and profile operations  
+
 ## How It Works
-
 ### 1. Start the Launcher
-
 Run:
 
 ```bash
