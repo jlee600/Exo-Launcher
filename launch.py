@@ -13,14 +13,14 @@ def main():
     # wifi
     ssid_used = None
     print(Colors.green("[WIFI] Connecting to Wi-Fi: Overground"))
-    if connect_wifi(sys_os, Wifi.SSID_OVG, Wifi.PASS_OVG, Wifi.IP_OVG):
-        ssid_used = Wifi.SSID_OVG
+    # if connect_wifi(sys_os, Wifi.SSID_OVG, Wifi.PASS_OVG, Wifi.IP_OVG):
+    #     ssid_used = Wifi.SSID_OVG
+    # else:
+    print(Colors.green("[WIFI] Connecting to Wi-Fi: Caren_5G"))
+    if connect_wifi(sys_os, Wifi.SSID_CAREN, Wifi.PASS_CAREN, Wifi.IP_CAREN):
+        ssid_used = Wifi.SSID_CAREN
     else:
-        print(Colors.green("[WIFI] Connecting to Wi-Fi: Caren_5G"))
-        if connect_wifi(sys_os, Wifi.SSID_CAREN, Wifi.PASS_CAREN, Wifi.IP_CAREN):
-            ssid_used = Wifi.SSID_CAREN
-        else:
-            sys.exit(1)
+        sys.exit(1)
     set_active_ssid(ssid_used)
 
     print(Colors.green("\n[SSH] Waiting for Jetson login selection...\n"))

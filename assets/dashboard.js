@@ -7,7 +7,7 @@ const STOP_API = 'http://127.0.0.1:8321/api/stop';
 const FLEX_API = 'http://127.0.0.1:8321/api/flexible-run';
 const FLEX_LOCAL_PATH = './data/flexible_config.json';
 const REFRESH_MS = 5000;
-const MOCK_APIS = false;
+const MOCK_APIS = false; // set to true to mock API calls for testing
 
 // ---------- state ----------
 let lastControllers = {};

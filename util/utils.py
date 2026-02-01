@@ -1,8 +1,22 @@
 import os, subprocess, json, datetime
 from config import Local_Paths, Colors
 
-def run(cmd):
-    return subprocess.run(cmd, text=True, capture_output=True)
+def run(cmd, *, check=False, **kwargs):
+    """
+    Small wrapper around subprocess.run used across the project.
+
+    - text=True: returns stdout/stderr as strings
+    - capture_output=True: keeps logs in r.stdout / r.stderr
+    - check: optional, if True will raise CalledProcessError on non-zero exit
+    - **kwargs: for env, cwd, timeout, etc.
+    """
+    return subprocess.run(
+        cmd,
+        text=True,
+        capture_output=True,
+        check=check,
+        **kwargs,
+    )
 
 def write_text(path, text):
     os.makedirs(os.path.dirname(path), exist_ok=True)

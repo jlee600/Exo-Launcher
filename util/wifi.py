@@ -55,6 +55,16 @@ def validate_ip_win(ssid, expected_ip):
             return True
     return False
 
+def validate_ip_linux(ssid, expected_ip):
+    ip = run(["ip", "-4", "addr", "show", Wifi.DEV_LINUX]).stdout
+    ip = next((line.split()[1].split("/")[0] for line in ip.splitlines() if line.strip().startswith("inet ")), None)
+    if ip:
+        ip = ".".join(ip.split('.')[:-1])
+        if ip == expected_ip:
+            # print(Colors.yellow(f"Already Connected to {ssid}"))
+            return True
+    return False
+
 def connect_wifi(operating, ssid, password, expected_ip):
     # mac
     if operating == "Darwin":
@@ -90,7 +100,20 @@ def connect_wifi(operating, ssid, password, expected_ip):
             if validate_ip_win(ssid, expected_ip):
                 print(Colors.yellow(f"[WIFI] Connected to {ssid}"))
                 return True
-    # linux   
+    # linux 
+    elif operating == "Linux":
+        if validate_ip_linux(ssid, expected_ip):
+            print(Colors.yellow(f"[WIFI] Already connected to {ssid}"))
+            return True
+
+        for i in range(3):
+            print(f"[WIFI] attempt {i+1}/3...")
+            run(["nmcli", "dev", "wifi", "connect", ssid, "password", password])
+
+            if validate_ip_linux(ssid, expected_ip):
+                print(Colors.yellow(f"[WIFI] Connected to {ssid}"))
+                return True
+        
     else: 
         print(Colors.red("[WIFI] Unsupported OS."))
         sys.exit(1)

@@ -200,15 +200,69 @@ def run_flexible_controller(name, config, user, host):
     # 4. Run controller on Jetson
     # remote_cmd = f"conda init && conda activate sully && cd {shlex.quote(Remote_Paths.CONTROLLERS)} && python3 {shlex.quote(name)}"
     #TODO do not hardcode sully
+    # remote_cmd = (
+    #     "source ~/miniconda3/etc/profile.d/conda.sh && "
+    #     "conda activate /home/sully/miniconda3/envs/sully && "
+    #     f"cd {shlex.quote(Remote_Paths.CONTROLLERS)} && "
+    #     f"python {shlex.quote(name)}"
+    # )
+
+    cmd = "sudo pkill -15 -f setup_watchdog.py"
+    r = run([
+        "ssh",
+        "-o", "StrictHostKeyChecking=accept-new",
+        "-o", f"ControlPath={cp}",
+        f"{user}@{host}",
+        cmd
+    ])
+    if r.returncode != 0:
+        print(Colors.red(f"[SSH] Failed to kill watchdog process:\n{r.stderr}"))
+        return (False, f"Failed to kill watchdog process: {r.stderr.strip() or r.stdout.strip()}")
+
+    # cmd = "sudo ip link set can0 down"
+    # r = run([
+    #     "ssh",
+    #     "-o", "StrictHostKeyChecking=accept-new",
+    #     "-o", f"ControlPath={cp}",
+    #     f"{user}@{host}",
+    #     cmd
+    # ])
+    # if r.returncode != 0:
+    #     print(Colors.red(f"[SSH] Failed to bring down can0:\n{r.stderr}"))
+    #     return (False, f"Failed to bring down can0: {r.stderr.strip() or r.stdout.strip()}")
+    
+    # cmd = "sudo ip link set can0 type can bitrate 1000000"
+    # r = run([
+    #     "ssh",
+    #     "-o", "StrictHostKeyChecking=accept-new",
+    #     "-o", f"ControlPath={cp}",
+    #     f"{user}@{host}",
+    #     cmd
+    # ])
+    # if r.returncode != 0:
+    #     print(Colors.red(f"[SSH] Failed to set can0 bitrate:\n{r.stderr}"))
+    #     return (False, f"Failed to set can0 bitrate: {r.stderr.strip() or r.stdout.strip()}")
+    
+    # cmd = "sudo ip link set can0 up"
+    # r = run([
+    #     "ssh",
+    #     "-o", "StrictHostKeyChecking=accept-new",
+    #     "-o", f"ControlPath={cp}",
+    #     f"{user}@{host}",
+    #     cmd
+    # ])
+    # if r.returncode != 0:
+    #     print(Colors.red(f"[SSH] Failed to bring up can0:\n{r.stderr}"))
+    #     return (False, f"Failed to bring up can0: {r.stderr.strip() or r.stdout.strip()}")
+
     remote_cmd = (
-        "source /etc/profile.d/conda.sh && "
-        "conda env list && "
-        "conda activate /home/sully/miniconda3/envs/sully"
-        # f"cd {shlex.quote(Remote_Paths.CONTROLLERS)} && "
-        # f"python {shlex.quote(name)}"
+        "source ~/miniconda3/etc/profile.d/conda.sh && "
+        "conda activate /home/sully/miniconda3/envs/sully && "
+        # "export HIP_EXO_ROOT=/home/sully/hip-exo-controllers && "
+        f"cd {shlex.quote(Remote_Paths.CONTROLLERS)} && "
+        f"python {shlex.quote(name)}"
     )
     print(Colors.yellow(f"[SSH] Running {name} on Jetson..."))
-
     r = run([
         "ssh",
         "-o", "StrictHostKeyChecking=accept-new",
