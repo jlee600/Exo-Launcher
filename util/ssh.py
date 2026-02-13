@@ -15,6 +15,9 @@ def ssh_reachable(host, port=22, timeout=3):
 def control_path(user, host, port=22):
     return os.path.expanduser(f"~/.ssh/cm-{user}@{host}:{port}")
 
+def remote_path(user, relative):
+    return f"/home/{user}/{relative.lstrip('/')}"
+
 def ensure_master(user, host, persist="60s"):
     # Check if SSH is reachable
     if not ssh_reachable(host):
@@ -56,12 +59,12 @@ def batch_compare_and_pull(user, host, ssid):
     """
     cp = control_path(user, host)
     remote_cmd = (
-        f"python3 {Remote_Paths.COMPARE} "
-        f"--req {Remote_Paths.REQ_PATH} "
-        f"--meta {Remote_Paths.META_PATH} "
-        f"--out {Remote_Paths.OUTPUT} >/dev/null 2>&1; "
-        f"echo {BEGIN_CMP}; cat {Remote_Paths.OUTPUT}; "
-        f"echo {BEGIN_META}; cat {Remote_Paths.META_PATH}"
+        f"python3 {remote_path(user, Remote_Paths.COMPARE)} "
+        f"--req {remote_path(user, Remote_Paths.REQ_PATH)} "
+        f"--meta {remote_path(user, Remote_Paths.META_PATH)} "
+        f"--out {remote_path(user, Remote_Paths.OUTPUT)} >/dev/null 2>&1; "
+        f"echo {BEGIN_CMP}; cat {remote_path(user, Remote_Paths.OUTPUT)}; "
+        f"echo {BEGIN_META}; cat {remote_path(user, Remote_Paths.META_PATH)}"
     )
 
     r = run([
@@ -93,12 +96,29 @@ def batch_compare_and_pull(user, host, ssid):
 ##############################
 # Sync loop
 ##############################
-def periodic_sync(user, host, ssid, interval_sec=5):
+def periodic_sync(user, host, ssid, interval_sec=3):
     """
     every interval:
       - run compare remotely and fetch both JSONs in ONE ssh
       - write them locally for the dashboard
     """
+    setup_devices = Remote_Paths.SETUP_DEVICES
+    remote_cmd = f"sudo -n bash {shlex.quote(setup_devices)}"
+    print(Colors.yellow(f"[SYNC] Setting up devices with {setup_devices}"))
+    cp = control_path(user, host)
+
+    r = run([
+        "ssh",
+        "-o", "StrictHostKeyChecking=accept-new",
+        "-o", f"ControlPath={cp}",
+        f"{user}@{host}",
+        "bash", "-lc", remote_cmd
+    ])    
+    if r.returncode != 0:
+        print(Colors.red(f"[SYNC] Device setup failed:\n{r.stderr}"))
+    else:
+        print(Colors.green(f"[SYNC] Device setup successful"))
+    
     while True:
         cmp_payload, meta_payload = batch_compare_and_pull(user, host, ssid)
         curr = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -107,7 +127,7 @@ def periodic_sync(user, host, ssid, interval_sec=5):
             write_json(Local_Paths.OUTPUT, cmp_payload)
             write_json(Local_Paths.META, meta_payload)
             
-            print(f"[SYNC {curr}] Updated comparison_output.json and meta.json")
+            print(f"[SYNC {curr}] Updated successfully")
         else:
             print(Colors.red(f"[SYNC {curr}] Update failed"))
 
@@ -132,7 +152,7 @@ def ready_locally(name):
 
 def run_remote_controller(name, user, host):
     """
-    Runs the named controller on Sully via the SSH control master.
+    Runs the named controller via the SSH control master.
     Returns (ok: bool, message: str).
     """
     normalized = name if name.endswith(".py") else f"{name}.py"
@@ -142,11 +162,30 @@ def run_remote_controller(name, user, host):
 
     if not ensure_master(user, host, persist="5m"):
         return (False, "SSH control master not available")
-
+    
+    # Kill any existing watchdog to free up devices
     cp = control_path(user, host)
-    remote_cmd = f"cd {shlex.quote(Remote_Paths.CONTROLLERS)} && python3 {shlex.quote(normalized)}"
-    print(Colors.yellow(f"\n[SSH] Running remote controller: {normalized}"))
+    pkill = "sudo pkill -15 -f setup_watchdog.py"
+    r = run([
+        "ssh",
+        "-o", "StrictHostKeyChecking=accept-new",
+        "-o", f"ControlPath={cp}",
+        f"{user}@{host}",
+        pkill
+    ])
+    if r.returncode != 0:
+        print(Colors.red(f"[SSH] Failed to kill watchdog process:\n{r.stderr}"))
+        return (False, f"Failed to kill watchdog process: {r.stderr.strip() or r.stdout.strip()}")
+    print(Colors.green(f"[SSH] Stopped existing watchdog process (if any)"))
 
+    # Run the controller
+    remote_cmd = (
+        "source ~/miniconda3/etc/profile.d/conda.sh && "
+        f"conda activate /home/{user}/miniconda3/envs/{user} && "
+        f"cd {shlex.quote(remote_path(user, Remote_Paths.CONTROLLERS))} && "
+        f"python {shlex.quote(normalized)}"
+    )
+    print(Colors.yellow(f"[SSH] Running {name} on Jetson..."))
     r = run([
         "ssh",
         "-o", "StrictHostKeyChecking=accept-new",
@@ -156,10 +195,28 @@ def run_remote_controller(name, user, host):
     ])
     if r.returncode != 0:
         print(Colors.red(f"[SSH] Remote run failed:\n{r.stderr}"))
-        return (False, f"Remote run failed: {r.stderr.strip() or r.stdout.strip()}")
+        return (False, f"Failed to run remote controller: {r.stderr.strip() or r.stdout.strip()}")
+    print(Colors.green(f"[SSH] Flexible controller started successfully"))
     
-    print(Colors.green(f"[SSH] Remote controller started:\n{r.stdout}"))
-    return (True, r.stdout.strip() or "Started.")
+    # Setup devices
+    device = Remote_Paths.DEVICES
+    remote_cmd = f"sudo -n bash {shlex.quote(device)}"
+    print(Colors.yellow(f"[SYNC] Setting up devices with {device}"))
+    cp = control_path(user, host)
+
+    r = run([
+        "ssh",
+        "-o", "StrictHostKeyChecking=accept-new",
+        "-o", f"ControlPath={cp}",
+        f"{user}@{host}",
+        "bash", "-lc", remote_cmd
+    ])    
+    if r.returncode != 0:
+        print(Colors.red(f"[SYNC] Device setup failed:\n{r.stderr}"))
+    else:
+        print(Colors.green(f"[SYNC] Device setup successful"))
+
+    return (True, "Remote controller started successfully")
 
 def run_flexible_controller(name, config, user, host):
     """
@@ -172,7 +229,7 @@ def run_flexible_controller(name, config, user, host):
       3. Run the controller on Jetson
     """
     local_path = Local_Paths.FLEX
-    remote_path = Remote_Paths.FLEX_CONFIG
+    remote = remote_path(user, Remote_Paths.FLEX_CONFIG)
     
     # 1. Write locally
     if not write_flexible_config(config):
@@ -190,76 +247,33 @@ def run_flexible_controller(name, config, user, host):
         "-o", "StrictHostKeyChecking=accept-new",
         "-o", f"ControlPath={cp}",
         local_path,
-        f"{user}@{host}:{remote_path}"
+        f"{user}@{host}:{remote}"
     ])
     if r.returncode != 0:
         print(Colors.red(f"[SSH] SCP failed:\n{r.stderr}"))
         return (False, f"Failed to copy config to Jetson: {r.stderr.strip() or r.stdout.strip()}")
-    print(Colors.green(f"[SSH] Copied flexible config to Jetson: {remote_path}"))
+    print(Colors.green(f"[SSH] Copied flexible config to Jetson: {remote}"))
 
-    # 4. Run controller on Jetson
-    # remote_cmd = f"conda init && conda activate sully && cd {shlex.quote(Remote_Paths.CONTROLLERS)} && python3 {shlex.quote(name)}"
-    #TODO do not hardcode sully
-    # remote_cmd = (
-    #     "source ~/miniconda3/etc/profile.d/conda.sh && "
-    #     "conda activate /home/sully/miniconda3/envs/sully && "
-    #     f"cd {shlex.quote(Remote_Paths.CONTROLLERS)} && "
-    #     f"python {shlex.quote(name)}"
-    # )
-
-    cmd = "sudo pkill -15 -f setup_watchdog.py"
+    # 4. Stop any existing watchdog
+    pkill = "sudo pkill -15 -f setup_watchdog.py"
     r = run([
         "ssh",
         "-o", "StrictHostKeyChecking=accept-new",
         "-o", f"ControlPath={cp}",
         f"{user}@{host}",
-        cmd
+        pkill
     ])
     if r.returncode != 0:
         print(Colors.red(f"[SSH] Failed to kill watchdog process:\n{r.stderr}"))
         return (False, f"Failed to kill watchdog process: {r.stderr.strip() or r.stdout.strip()}")
+    print(Colors.green(f"[SSH] Stopped existing watchdog process (if any)"))
 
-    # cmd = "sudo ip link set can0 down"
-    # r = run([
-    #     "ssh",
-    #     "-o", "StrictHostKeyChecking=accept-new",
-    #     "-o", f"ControlPath={cp}",
-    #     f"{user}@{host}",
-    #     cmd
-    # ])
-    # if r.returncode != 0:
-    #     print(Colors.red(f"[SSH] Failed to bring down can0:\n{r.stderr}"))
-    #     return (False, f"Failed to bring down can0: {r.stderr.strip() or r.stdout.strip()}")
-    
-    # cmd = "sudo ip link set can0 type can bitrate 1000000"
-    # r = run([
-    #     "ssh",
-    #     "-o", "StrictHostKeyChecking=accept-new",
-    #     "-o", f"ControlPath={cp}",
-    #     f"{user}@{host}",
-    #     cmd
-    # ])
-    # if r.returncode != 0:
-    #     print(Colors.red(f"[SSH] Failed to set can0 bitrate:\n{r.stderr}"))
-    #     return (False, f"Failed to set can0 bitrate: {r.stderr.strip() or r.stdout.strip()}")
-    
-    # cmd = "sudo ip link set can0 up"
-    # r = run([
-    #     "ssh",
-    #     "-o", "StrictHostKeyChecking=accept-new",
-    #     "-o", f"ControlPath={cp}",
-    #     f"{user}@{host}",
-    #     cmd
-    # ])
-    # if r.returncode != 0:
-    #     print(Colors.red(f"[SSH] Failed to bring up can0:\n{r.stderr}"))
-    #     return (False, f"Failed to bring up can0: {r.stderr.strip() or r.stdout.strip()}")
-
+    # 5. Run the controller
+    controllers = remote_path(user, Remote_Paths.CONTROLLERS)
     remote_cmd = (
         "source ~/miniconda3/etc/profile.d/conda.sh && "
-        "conda activate /home/sully/miniconda3/envs/sully && "
-        # "export HIP_EXO_ROOT=/home/sully/hip-exo-controllers && "
-        f"cd {shlex.quote(Remote_Paths.CONTROLLERS)} && "
+        f"conda activate /home/{user}/miniconda3/envs/{user} && "
+        f"cd {shlex.quote(controllers)} && "
         f"python {shlex.quote(name)}"
     )
     print(Colors.yellow(f"[SSH] Running {name} on Jetson..."))
@@ -273,13 +287,31 @@ def run_flexible_controller(name, config, user, host):
     if r.returncode != 0:
         print(Colors.red(f"[SSH] Remote run failed:\n{r.stderr}"))
         return (False, f"Failed to run remote controller: {r.stderr.strip() or r.stdout.strip()}")
-
     print(Colors.green(f"[SSH] Flexible controller started successfully"))
+    
+    # 6. Setup devices
+    device = Remote_Paths.DEVICES
+    remote_cmd = f"sudo -n bash {shlex.quote(device)}"
+    print(Colors.yellow(f"[SYNC] Setting up devices with {device}"))
+    cp = control_path(user, host)
+
+    r = run([
+        "ssh",
+        "-o", "StrictHostKeyChecking=accept-new",
+        "-o", f"ControlPath={cp}",
+        f"{user}@{host}",
+        "bash", "-lc", remote_cmd
+    ])    
+    if r.returncode != 0:
+        print(Colors.red(f"[SYNC] Device setup failed:\n{r.stderr}"))
+    else:
+        print(Colors.green(f"[SYNC] Device setup successful"))
+
     return (True, "Flexible controller started successfully")
 
 def stop_remote_controller(name, user, host):
     """
-    Stops the named controller on Sully via pkill.
+    Stops the named controller via pkill.
     Returns (ok: bool, message: str).
     """
     normalized = name if name.endswith(".py") else f"{name}.py"
@@ -287,8 +319,23 @@ def stop_remote_controller(name, user, host):
     if not ensure_master(user, host, persist="5m"):
         return (False, "SSH control master not available")
 
+    # Kill the connection hub
+    kill_connection_hub = Remote_Paths.CONNECTION_HUB
+    cmd = f"sudo pkill -15 -f {shlex.quote(kill_connection_hub)}"
     cp = control_path(user, host)
-    remote_cmd = f"pkill -f {shlex.quote(normalized)}"
+
+    r = run([
+        "ssh",
+        "-o", "StrictHostKeyChecking=accept-new",
+        "-o", f"ControlPath={cp}",
+        f"{user}@{host}",
+        cmd
+    ])
+    if r.returncode != 0:        
+        print(Colors.red(f"[SSH] Failed to stop connection hub:\n{r.stderr}"))
+
+    # Stop the controller itself
+    remote_cmd = f"sudo pkill -15 -f {shlex.quote(normalized)}"
     print(Colors.yellow(f"\n[SSH] Stopping remote controller: {normalized}"))
 
     r = run([
@@ -301,6 +348,24 @@ def stop_remote_controller(name, user, host):
     if r.returncode != 0:
         print(Colors.red(f"[SSH] Remote stop failed:\n{r.stderr}"))
         return (False, f"Remote stop failed: {r.stderr.strip() or r.stdout.strip()}")
+    
+    # Setup devices
+    setup_devices = Remote_Paths.SETUP_DEVICES
+    remote_cmd = f"sudo -n bash {shlex.quote(setup_devices)}"
+    print(Colors.yellow(f"[SYNC] Setting up devices with {setup_devices}"))
+    cp = control_path(user, host)
+
+    r = run([
+        "ssh",
+        "-o", "StrictHostKeyChecking=accept-new",
+        "-o", f"ControlPath={cp}",
+        f"{user}@{host}",
+        "bash", "-lc", remote_cmd
+    ])    
+    if r.returncode != 0:
+        print(Colors.red(f"[SYNC] Device setup failed:\n{r.stderr}"))
+    else:
+        print(Colors.green(f"[SYNC] Device setup successful"))
     
     print(Colors.green(f"[SSH] Remote controller stopped:\n{r.stdout}"))
     return (True, "Stopped.")

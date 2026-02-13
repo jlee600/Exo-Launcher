@@ -113,7 +113,6 @@ def connect_wifi(operating, ssid, password, expected_ip):
             if validate_ip_linux(ssid, expected_ip):
                 print(Colors.yellow(f"[WIFI] Connected to {ssid}"))
                 return True
-        
     else: 
         print(Colors.red("[WIFI] Unsupported OS."))
         sys.exit(1)
