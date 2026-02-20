@@ -12,7 +12,7 @@ def main():
 
     # wifi
     ssid_used = None
-    print(Colors.green("[WIFI] Connecting to Wi-Fi: Overground"))
+    # print(Colors.green("[WIFI] Connecting to Wi-Fi: Overground"))
     # if connect_wifi(sys_os, Wifi.SSID_OVG, Wifi.PASS_OVG, Wifi.IP_OVG):
     #     ssid_used = Wifi.SSID_OVG
     # else:
