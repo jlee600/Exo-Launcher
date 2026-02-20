@@ -339,5 +339,5 @@ def stop_remote_controller(name, user, host):
     else:
         print(Colors.green(f"[SYNC] Device setup successful"))
     
-    print(Colors.green(f"[SSH] Remote controller stopped:\n{r.stdout}"))
+    print(Colors.green(f"[SSH] Remote controller stopped:\n{stop_ctrl.stdout}"))
     return (True, "Stopped.")
