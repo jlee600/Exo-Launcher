@@ -36,16 +36,16 @@ async function loadProfiles() {
   }
 }
 
-g("test").onclick = async () => {
-  try {
-    const b = { name: val("name") || val("sel"), user: val("user"), host: val("host") };
-    if (!b.name || !b.user || !b.host) throw new Error("Fill name/user/host");
-    await req("/api/profile/test", "POST", b);
-    say("SSH OK ✓", true);
-  } catch (e) {
-    say(e.message, false);
-  }
-};
+// g("test").onclick = async () => {
+//   try {
+//     const b = { name: val("name") || val("sel"), user: val("user"), host: val("host") };
+//     if (!b.name || !b.user || !b.host) throw new Error("Fill name/user/host");
+//     await req("/api/profile/test", "POST", b);
+//     say("SSH OK ✓", true);
+//   } catch (e) {
+//     say(e.message, false);
+//   }
+// };
 
 g("save").onclick = async () => {
   try {

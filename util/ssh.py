@@ -102,7 +102,7 @@ def batch_compare_and_pull(user, host, ssid):
         meta_payload = json.loads(meta_json_str)
         return cmp_payload, meta_payload
     except Exception as e:
-        print(Colors.red(f"[parse] Failed to parse batch output: {e}"))
+        print(Colors.red(f"[SSH] Failed to parse batch output: {e}"))
         return None, None
     
 ##############################
@@ -114,7 +114,28 @@ def periodic_sync(user, host, ssid, interval_sec=3):
       - run compare remotely and fetch both JSONs in ONE ssh
       - write them locally for the dashboard
     """
-    # 1. remote call setup_devices.sh
+    # 1. kill watchdog and connection hub just in case
+    remote_cmd = f"sudo pkill -15 -f connection_hub.py"
+    kill = ssh_run(user, host, remote_cmd)
+    if not kill:
+        print(Colors.red("[SSH] SSH Master failed to execute connection hub kill"))
+        return (False, "SSH Master failed to execute connection hub kill")
+    if kill.returncode != 0:        
+        print(Colors.red(f"[SSH] Failed to stop connection hub:\n{kill.stderr}"))
+        return (False, f"Failed to stop connection hub: {kill.stderr.strip() or kill.stdout.strip()}")
+    print(Colors.green(f"[SSH] Stopped existing connection hub process (if any)"))
+    
+    remote_cmd = "sudo pkill -15 -f setup_watchdog.py"
+    pkill = ssh_run(user, host, remote_cmd)
+    if not pkill:
+        print(Colors.red("[SSH] SSH Master failed to execute watchdog kill"))
+        return (False, "SSH Master failed to execute watchdog kill")
+    if pkill.returncode != 0:
+        print(Colors.red(f"[SSH] Failed to kill watchdog process:\n{pkill.stderr}"))
+        return (False, f"Failed to kill watchdog process: {pkill.stderr.strip() or pkill.stdout.strip()}")
+    print(Colors.green(f"[SSH] Stopped existing watchdog process (if any)"))
+
+    # 2. remote call setup_devices.sh
     path = remote_path(user, Remote_Paths.SETUP_DEVICES)
     print(Colors.yellow(f"[SYNC] Setting up devices with {path}"))
     remote_cmd = f"sudo -n {shlex.quote(path)}"
@@ -127,7 +148,7 @@ def periodic_sync(user, host, ssid, interval_sec=3):
     else:
         print(Colors.green(f"[SYNC] Device setup successful"))
     
-    # 2. periodic compare + pull
+    # 3. periodic compare + pull
     while True:
         cmp_payload, meta_payload = batch_compare_and_pull(user, host, ssid)
         curr = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -267,7 +288,7 @@ def run_flexible_controller(name, config, user, host):
         "source ~/miniconda3/etc/profile.d/conda.sh && "
         f"conda activate /home/{user}/miniconda3/envs/{user} && "
         f"cd {shlex.quote(path)} && "
-        f"python {shlex.quote(name)}"
+        f"/home/boggs/miniconda3/envs/boggs/bin/python {shlex.quote(name)}"
     )
     print(Colors.yellow(f"[SSH] Running {name} on Jetson..."))
     ctrl = ssh_run(user, host, remote_cmd)
@@ -305,14 +326,14 @@ def stop_remote_controller(name, user, host):
         return (False, "SSH control master not available")
 
     # 1. Kill the connection hub
-    path = Remote_Paths.CONNECTION_HUB
-    remote_cmd = f"sudo pkill -15 -f {shlex.quote(path)}"
+    remote_cmd = f"sudo pkill -15 -f connection_hub.py"
     kill = ssh_run(user, host, remote_cmd)
     if not kill:
         print(Colors.red("[SSH] SSH Master failed to execute connection hub kill"))
         return (False, "SSH Master failed to execute connection hub kill")
     if kill.returncode != 0:        
         print(Colors.red(f"[SSH] Failed to stop connection hub:\n{kill.stderr}"))
+    print(Colors.green(f"[SSH] Stopped existing connection hub process (if any)"))
 
     # 2. Stop the controller itself
     remote_cmd = f"sudo pkill -15 -f {shlex.quote(normalized)}"

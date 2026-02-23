@@ -74,20 +74,20 @@ def start_api_server(on_run, on_flex, on_stop, on_login=None, host="127.0.0.1", 
             raw = self.rfile.read(length) or b"{}"
 
             # --- Profiles: test ---
-            if self.path == "/api/profile/test":
-                try:
-                    data = json.loads(raw)
-                    name = (data.get("name") or "").strip()
-                    user = (data.get("user") or "").strip()
-                    host = (data.get("host") or "").strip()
-                    ok, msg = validate_profile(name, user, host)
-                    if not ok:
-                        return self._json(400, {"ok": False, "message": msg})
-                    if not ensure_master(user, host, persist="60s"):
-                        return self._json(400, {"ok": False, "message": "SSH not reachable or handshake failed"})
-                    return self._json(200, {"ok": True})
-                except Exception as e:
-                    return self._json(500, {"ok": False, "message": f"Server error: {e}"})
+            # if self.path == "/api/profile/test":
+            #     try:
+            #         data = json.loads(raw)
+            #         name = (data.get("name") or "").strip()
+            #         user = (data.get("user") or "").strip()
+            #         host = (data.get("host") or "").strip()
+            #         ok, msg = validate_profile(name, user, host)
+            #         if not ok:
+            #             return self._json(400, {"ok": False, "message": msg})
+            #         if not ensure_master(user, host, persist="60s"):
+            #             return self._json(400, {"ok": False, "message": "SSH not reachable or handshake failed"})
+            #         return self._json(200, {"ok": True})
+            #     except Exception as e:
+            #         return self._json(500, {"ok": False, "message": f"Server error: {e}"})
 
             # --- Profiles: save ---
             if self.path == "/api/profile/save":
