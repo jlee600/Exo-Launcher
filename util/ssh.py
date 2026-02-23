@@ -205,7 +205,7 @@ def run_remote_controller(name, user, host):
         "source ~/miniconda3/etc/profile.d/conda.sh && "
         f"conda activate /home/{user}/miniconda3/envs/{user} && "
         f"cd {shlex.quote(remote_path(user, Remote_Paths.CONTROLLERS))} && "
-        f"python {shlex.quote(normalized)}"
+        f"/home/{user}/miniconda3/envs/{user}/bin/python {shlex.quote(normalized)}"
     )
     print(Colors.yellow(f"[SSH] Running {name} on Jetson..."))
     ctrl = ssh_run(user, host, remote_cmd)
@@ -288,7 +288,7 @@ def run_flexible_controller(name, config, user, host):
         "source ~/miniconda3/etc/profile.d/conda.sh && "
         f"conda activate /home/{user}/miniconda3/envs/{user} && "
         f"cd {shlex.quote(path)} && "
-        f"/home/boggs/miniconda3/envs/boggs/bin/python {shlex.quote(name)}"
+        f"/home/{user}/miniconda3/envs/{user}/bin/python {shlex.quote(name)}"
     )
     print(Colors.yellow(f"[SSH] Running {name} on Jetson..."))
     ctrl = ssh_run(user, host, remote_cmd)
