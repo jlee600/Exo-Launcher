@@ -1,6 +1,6 @@
 import sys, platform, signal, webbrowser, time
-from config import Wifi, Colors, Local_Paths, HTML
-from util.html import start_static_server, start_api_server
+from config import Wifi, Colors, Local_Paths, SERVER
+from util.api import start_static_server, start_api_server
 from util.login import on_login, close_active_master, set_active_ssid
 from util.ssh import run_remote_controller, stop_remote_controller, run_flexible_controller
 from util.wifi import connect_wifi
@@ -32,12 +32,12 @@ def main():
         on_stop=stop_remote_controller,
         on_login=on_login,
         host="127.0.0.1",
-        port=HTML.API_PORT
+        port=SERVER.API_PORT
     )
 
     # Static server (Thread 2)
-    httpd = start_static_server(Local_Paths.ROOT, port=HTML.POLL_PORT)
-    login_url = f"http://127.0.0.1:{HTML.POLL_PORT}/login.html"
+    httpd = start_static_server(Local_Paths.ROOT, port=SERVER.POLL_PORT)
+    login_url = f"http://127.0.0.1:{SERVER.POLL_PORT}/login.html"
     print(Colors.yellow(f"[UI] Opening login at {login_url}\n"))
     webbrowser.open(login_url)
 

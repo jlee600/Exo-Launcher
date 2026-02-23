@@ -1,5 +1,5 @@
 import threading, webbrowser
-from config import Wifi, HTML
+from config import Wifi, SERVER
 from util.utils import write_dashboard_info
 from util.ssh import periodic_sync, close_master
 

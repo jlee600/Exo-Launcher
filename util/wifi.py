@@ -1,5 +1,5 @@
 import os, sys
-from config import Wifi, Local_Paths,Colors
+from config import Wifi, Local_Paths, Colors
 from util.utils import run
 
 XML_TEMPLATE = """<?xml version="1.0"?>
