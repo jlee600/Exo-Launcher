@@ -152,15 +152,13 @@ def periodic_sync(user, host, ssid, interval_sec=3):
     # 3. periodic compare + pull
     while True:
         cmp_payload, meta_payload = batch_compare_and_pull(user, host, ssid)
-        curr = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
         if cmp_payload and meta_payload:
             write_json(Local_Paths.OUTPUT, cmp_payload)
             write_json(Local_Paths.META, meta_payload)
             
-            logger.info("[SYNC %s] Updated successfully", curr)
+            logger.info("[SYNC] Updated successfully")
         else:
-            logger.error("[SYNC %s] Update failed", curr)
+            logger.error("[SYNC] Update failed")
 
         time.sleep(interval_sec)
 
@@ -298,7 +296,7 @@ def run_flexible_controller(name, config, user, host):
         f"cd {shlex.quote(path)} && "
         f"nohup /home/{user}/miniconda3/envs/{user}/bin/python {shlex.quote(name)} > controller.log 2>&1 &"
     )
-    logger.warning(f"[SSH] Running {name} on Jetson...")
+    logger.warning("[SSH] Running %s on Jetson...", name)
     ctrl = ssh_run(user, host, remote_cmd)
     if not ctrl:
         logger.error("[SSH] SSH Master failed to execute controller run")
@@ -311,7 +309,7 @@ def run_flexible_controller(name, config, user, host):
     # 6. Setup devices
     path = remote_path(user, Remote_Paths.DEVICES)
     remote_cmd = f"sudo -n {shlex.quote(path)}"
-    logger.warning(f"[SYNC] Setting up devices with {path}")
+    logger.warning("[SYNC] Setting up devices with %s", path)
     devices = ssh_bash(user, host, remote_cmd)
     if not devices:
         logger.error("[SSH] SSH Master failed to execute device setup")
@@ -323,7 +321,7 @@ def run_flexible_controller(name, config, user, host):
     
     # 7. open gui
     gui_url = f"http://{host}:5000/gui"
-    logger.warning(f"[UI] Opening GUI at {gui_url}")
+    logger.warning("[UI] Opening GUI at %s", gui_url)
     time.sleep(1.5)  
     webbrowser.open_new_tab(gui_url)
 
@@ -350,7 +348,7 @@ def stop_remote_controller(name, user, host):
     logger.info("[SSH] Stopped existing connection hub process (if any)")
     # 2. Stop the controller itself
     remote_cmd = f"sudo pkill -15 -f {shlex.quote(normalized)}"
-    logger.warning(f"[SSH] Stopping remote controller: {normalized}")
+    logger.warning("[SSH] Stopping remote controller: %s", normalized)
     stop_ctrl = ssh_run(user, host, remote_cmd)
     if not stop_ctrl:
         logger.error("[SSH] SSH Master failed to execute controller stop")

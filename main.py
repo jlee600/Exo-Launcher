@@ -13,7 +13,7 @@ def main():
 
     # wifi
     ssid_used = None
-    # print(Colors.green("[WIFI] Connecting to Wi-Fi: Overground"))
+    # logger.info("[WIFI] Connecting to Wi-Fi: Overground")
     # if connect_wifi(sys_os, Wifi.SSID_OVG, Wifi.PASS_OVG, Wifi.IP_OVG):
     #     ssid_used = Wifi.SSID_OVG
     # else:
@@ -45,12 +45,12 @@ def main():
     # Graceful shutdown closes any active control master
     def _cleanup(*_):
         # TODO: reset meta.json, pkill watchdog
-        logger.warning("\n[parse] Stopping sync...")
+        logger.warning("\n[parse] Stopping sync ")
         try:
             close_active_master()
         finally:
             try:
-                logger.warning("[API] Shutting down API server ...")
+                logger.warning("[API] Shutting down API server ")
                 api.shutdown()
             except Exception:
                 pass
