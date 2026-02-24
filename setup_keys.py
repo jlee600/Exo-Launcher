@@ -2,6 +2,7 @@ import os
 import subprocess
 from util.profiles import load_store
 from config import Colors
+from util.log import logger
 
 def check_or_generate_key():
     ssh_dir = os.path.expanduser("~/.ssh")
@@ -10,23 +11,23 @@ def check_or_generate_key():
 
     # Check if a key already exists
     if os.path.exists(ed25519_key) or os.path.exists(rsa_key):
-        print(Colors.green("[SSH] SSH key already exists on this laptop."))
+        logger.info("[SSH] SSH key already exists on this laptop.")
         return True
     
-    print(Colors.yellow("[SSH] No SSH key found. Generating a new ed25519 key..."))
+    logger.warning("[SSH] No SSH key found. Generating a new ed25519 key...")
     try:
         # Run ssh-keygen with no passphrase (-N "")
         subprocess.run([
             "ssh-keygen", "-t", "ed25519", "-N", "", "-f", ed25519_key
         ], check=True)
-        print(Colors.green("[SSH] Successfully generated new SSH key."))
+        logger.info("[SSH] Successfully generated new SSH key.")
         return True
     except subprocess.CalledProcessError as e:
-        print(Colors.red(f"[ERROR] Failed to generate SSH key: {e}"))
+        logger.error("[ERROR] Failed to generate SSH key: %s", e)
         return False
 
 def setup_passwordless_login():
-    print(Colors.yellow("\n=== Exo-Launcher SSH Key Setup ==="))
+    logger.info("\n=== Exo-Launcher SSH Key Setup ===")
     if not check_or_generate_key():
         return
     
@@ -34,28 +35,28 @@ def setup_passwordless_login():
     profiles = store.get("profiles", {})
     
     if not profiles:
-        print(Colors.red("[ERROR] No profiles found in data/jetson_profiles.json"))
+        logger.error("[ERROR] No profiles found in data/jetson_profiles.json")
         return
         
-    print(Colors.yellow(f"\nFound {len(profiles)} saved profiles. Ready to copy keys."))
-    print(Colors.red("Note: You will be prompted to enter the password for each Jetson one last time.\n"))
+    logger.info(f"\nFound {len(profiles)} saved profiles. Ready to copy keys.")
+    logger.warning("Note: You will be prompted to enter the password for each Jetson one last time.\n")
     
     for name, data in profiles.items():
         user = data.get("user")
         host = data.get("host")
         target = f"{user}@{host}"
         
-        print(Colors.yellow(f"--- Setting up profile '{name}' ({target}) ---"))
+        logger.info(f"--- Setting up profile '{name}' ({target}) ---")
         try:
             subprocess.run(["ssh-copy-id", target])
-            print(Colors.green(f"[SUCCESS] Key copied to {name}!\n"))
+            logger.info(f"[SUCCESS] Key copied to {name}!")
         except FileNotFoundError:
-            print(Colors.red("[ERROR] 'ssh-copy-id' command not found on this OS."))
+            logger.error("[ERROR] 'ssh-copy-id' command not found on this OS.")
         except Exception as e:
-            print(Colors.red(f"[ERROR] Failed to copy key to {target}: {e}\n"))
+            logger.error("[ERROR] Failed to copy key to %s: %s", target, e)
 
-    print(Colors.green("=== Setup Complete! ==="))
-    print(Colors.green("You can now use the Exo-Launcher dashboard without typing passwords.\n"))
+    logger.info("=== Setup Complete! ===")
+    logger.info("You can now use the Exo-Launcher dashboard without typing passwords.\n")
 
 if __name__ == "__main__":
     setup_passwordless_login()

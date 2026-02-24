@@ -1,6 +1,7 @@
 import os, socket, json, time, datetime, re, shlex, webbrowser
 from config import Remote_Paths, Colors, Local_Paths
 from util.utils import run, write_json, write_dashboard_info, write_flexible_config
+from util.log import logger
 
 ##############################
 # SSH control master helpers
@@ -21,7 +22,7 @@ def remote_path(user, relative):
 def ensure_master(user, host, persist="60s"):
     # Check if SSH is reachable
     if not ssh_reachable(host):
-        print(Colors.red("[SSH] SSH not reachable"))
+        logger.error("[SSH] SSH not reachable")
         return False
     cp = control_path(user, host)
     # Check if a master is already running
@@ -29,7 +30,7 @@ def ensure_master(user, host, persist="60s"):
     if chk.returncode == 0:
         return True
     # Start a new master in the background
-    print(Colors.yellow("[SSH] Starting SSH control master..."))
+    logger.warning("[SSH] Starting SSH control master...")
     r = run([
        "ssh", "-M", "-N", "-f",
         "-o", f"ControlPath={cp}",
@@ -39,7 +40,7 @@ def ensure_master(user, host, persist="60s"):
         f"{user}@{host}"
     ])
     if r.returncode != 0:
-        print(Colors.red(f"[SSH] Failed to start control master:\n{r.stderr}"))
+        logger.error("[SSH] Failed to start control master:\n%s", r.stderr)
         return False
     return True
 
@@ -84,10 +85,10 @@ def batch_compare_and_pull(user, host, ssid):
     )
     batch_compare = ssh_run(user, host, remote_cmd)
     if not batch_compare:
-        print(Colors.red("[SSH] SSH Master failed to execute batch compare"))
+        logger.error("[SSH] SSH Master failed to execute batch compare")
         return None, None
     if batch_compare.returncode != 0:
-        print(Colors.red(f"[SSH] Remote batch failed:\n{batch_compare.stderr}"))
+        logger.error("[SSH] Remote batch failed:\n%s", batch_compare.stderr)
         return None, None
     out = batch_compare.stdout or ""
 
@@ -102,7 +103,7 @@ def batch_compare_and_pull(user, host, ssid):
         meta_payload = json.loads(meta_json_str)
         return cmp_payload, meta_payload
     except Exception as e:
-        print(Colors.red(f"[SSH] Failed to parse batch output: {e}"))
+        logger.error("[SSH] Failed to parse batch output: %s", e)
         return None, None
     
 ##############################
@@ -118,35 +119,35 @@ def periodic_sync(user, host, ssid, interval_sec=3):
     remote_cmd = f"sudo pkill -15 -f connection_hub.py"
     kill = ssh_run(user, host, remote_cmd)
     if not kill:
-        print(Colors.red("[SSH] SSH Master failed to execute connection hub kill"))
+        logger.error("[SSH] SSH Master failed to execute connection hub kill")
         return (False, "SSH Master failed to execute connection hub kill")
     if kill.returncode != 0:        
-        print(Colors.red(f"[SSH] Failed to stop connection hub:\n{kill.stderr}"))
+        logger.error("[SSH] Failed to stop connection hub:\n%s", kill.stderr)
         return (False, f"Failed to stop connection hub: {kill.stderr.strip() or kill.stdout.strip()}")
-    print(Colors.green(f"[SSH] Stopped existing connection hub process (if any)"))
+    logger.info("[SSH] Stopped existing connection hub process (if any)")
     
     remote_cmd = "sudo pkill -15 -f setup_watchdog.py"
     pkill = ssh_run(user, host, remote_cmd)
     if not pkill:
-        print(Colors.red("[SSH] SSH Master failed to execute watchdog kill"))
+        logger.error("[SSH] SSH Master failed to execute watchdog kill")
         return (False, "SSH Master failed to execute watchdog kill")
     if pkill.returncode != 0:
-        print(Colors.red(f"[SSH] Failed to kill watchdog process:\n{pkill.stderr}"))
+        logger.error("[SSH] Failed to kill watchdog process:\n%s", pkill.stderr)
         return (False, f"Failed to kill watchdog process: {pkill.stderr.strip() or pkill.stdout.strip()}")
-    print(Colors.green(f"[SSH] Stopped existing watchdog process (if any)"))
+    logger.info("[SSH] Stopped existing watchdog process (if any)")
 
     # 2. remote call setup_devices.sh
     path = remote_path(user, Remote_Paths.SETUP_DEVICES)
-    print(Colors.yellow(f"[SYNC] Setting up devices with {path}"))
+    logger.warning("[SYNC] Setting up devices with %s", path)
     remote_cmd = f"sudo -n {shlex.quote(path)}"
     setup_devices = ssh_run(user, host, remote_cmd)
     if not setup_devices:
-        print(Colors.red("[SSH] SSH Master failed to execute device setup"))
+        logger.error("[SSH] SSH Master failed to execute device setup")
         return
     if setup_devices.returncode != 0:
-        print(Colors.red(f"[SYNC] Device setup failed:\n{setup_devices.stderr}"))
+        logger.error("[SYNC] Device setup failed:\n%s", setup_devices.stderr)
     else:
-        print(Colors.green(f"[SYNC] Device setup successful"))
+        logger.info("[SYNC] Device setup successful")
     
     # 3. periodic compare + pull
     while True:
@@ -157,9 +158,9 @@ def periodic_sync(user, host, ssid, interval_sec=3):
             write_json(Local_Paths.OUTPUT, cmp_payload)
             write_json(Local_Paths.META, meta_payload)
             
-            print(f"[SYNC {curr}] Updated successfully")
+            logger.info("[SYNC %s] Updated successfully", curr)
         else:
-            print(Colors.red(f"[SYNC {curr}] Update failed"))
+            logger.error("[SYNC %s] Update failed", curr)
 
         time.sleep(interval_sec)
 
@@ -193,12 +194,12 @@ def run_remote_controller(name, user, host):
     remote_cmd = "sudo pkill -15 -f setup_watchdog.py"
     pkill = ssh_run(user, host, remote_cmd)
     if not pkill:
-        print(Colors.red("[SSH] SSH Master failed to execute watchdog kill"))
+        logger.error("[SSH] SSH Master failed to execute watchdog kill")
         return (False, "SSH Master failed to execute watchdog kill")
     if pkill.returncode != 0:
-        print(Colors.red(f"[SSH] Failed to kill watchdog process:\n{pkill.stderr}"))
+        logger.error("[SSH] Failed to kill watchdog process:\n%s", pkill.stderr)
         return (False, f"Failed to kill watchdog process: {pkill.stderr.strip() or pkill.stdout.strip()}")
-    print(Colors.green(f"[SSH] Stopped existing watchdog process (if any)"))
+    logger.info("[SSH] Stopped existing watchdog process (if any)")
 
     # 2. Run the controller
     remote_cmd = (
@@ -207,32 +208,32 @@ def run_remote_controller(name, user, host):
         f"cd {shlex.quote(remote_path(user, Remote_Paths.CONTROLLERS))} && "
         f"nohup /home/{user}/miniconda3/envs/{user}/bin/python {shlex.quote(normalized)} > controller.log 2>&1 &"
     )
-    print(Colors.yellow(f"[SSH] Running {name} on Jetson..."))
+    logger.warning("[SSH] Running %s on Jetson...", name)
     ctrl = ssh_run(user, host, remote_cmd)
     if not ctrl:
-        print(Colors.red("[SSH] SSH Master failed to execute controller run"))
+        logger.error("[SSH] SSH Master failed to execute controller run")
         return (False, "SSH Master failed to execute controller run")
     if ctrl.returncode != 0:
-        print(Colors.red(f"[SSH] Remote run failed:\n{ctrl.stderr}"))
+        logger.error("[SSH] Remote run failed:\n%s", ctrl.stderr)
         return (False, f"Failed to run remote controller: {ctrl.stderr.strip() or ctrl.stdout.strip()}")
-    print(Colors.green(f"[SSH] Flexible controller started successfully"))
+    logger.info("[SSH] Flexible controller started successfully")
     
     # 3. remote call devices.sh    
     device = remote_path(user, Remote_Paths.DEVICES)
     remote_cmd = f"sudo -n {shlex.quote(device)}"
-    print(Colors.yellow(f"[SYNC] Setting up devices with {device}"))
+    logger.warning("[SYNC] Setting up devices with %s", device)
     devices = ssh_bash(user, host, remote_cmd)  
     if not devices:
-        print(Colors.red("[SSH] SSH Master failed to execute device setup"))
+        logger.error("[SSH] SSH Master failed to execute device setup")
         return (False, "SSH Master failed to execute device setup")
     if devices.returncode != 0:
-        print(Colors.red(f"[SYNC] Device setup failed:\n{devices.stderr}"))
+        logger.error("[SYNC] Device setup failed:\n%s", devices.stderr)
     else:
-        print(Colors.green(f"[SYNC] Device setup successful"))
+        logger.info("[SYNC] Device setup successful")
 
     # 4. open gui
     gui_url = f"http://{host}:5000/gui"
-    print(Colors.yellow(f"[UI] Opening GUI at {gui_url}"))
+    logger.warning("[UI] Opening GUI at %s", gui_url)
     time.sleep(1.5)  
     webbrowser.open_new_tab(gui_url)
 
@@ -271,22 +272,23 @@ def run_flexible_controller(name, config, user, host):
     ])
     if not copy:
         print(Colors.red("[SSH] SSH Master failed to execute SCP"))
+        logger.error("[SSH] SSH Master failed to execute SCP")
         return (False, "SSH Master failed to execute SCP")
     if copy.returncode != 0:
-        print(Colors.red(f"[SSH] SCP failed:\n{copy.stderr}"))
+        logger.error("[SSH] SCP failed:\n%s", copy.stderr)
         return (False, f"Failed to copy config to Jetson: {copy.stderr.strip() or copy.stdout.strip()}")
-    print(Colors.green(f"[SSH] Copied flexible config to Jetson: {remote}"))
+    logger.info("[SSH] Copied flexible config to Jetson: %s", remote)
 
     # 4. Stop any existing watchdog
     remote_cmd = "sudo pkill -15 -f setup_watchdog.py"
     pkill = ssh_run(user, host, remote_cmd)
     if not pkill:
-        print(Colors.red("[SSH] SSH Master failed to execute watchdog kill"))
+        logger.error("[SSH] SSH Master failed to execute watchdog kill")
         return (False, "SSH Master failed to execute watchdog kill")
     if pkill.returncode != 0:
-        print(Colors.red(f"[SSH] Failed to kill watchdog process:\n{pkill.stderr}"))
+        logger.error("[SSH] Failed to kill watchdog process:\n%s", pkill.stderr)
         return (False, f"Failed to kill watchdog process: {pkill.stderr.strip() or pkill.stdout.strip()}")
-    print(Colors.green(f"[SSH] Stopped existing watchdog process (if any)"))
+    logger.info("[SSH] Stopped existing watchdog process (if any)")
 
     # 5. Run the controller
     path = remote_path(user, Remote_Paths.CONTROLLERS)
@@ -296,32 +298,32 @@ def run_flexible_controller(name, config, user, host):
         f"cd {shlex.quote(path)} && "
         f"nohup /home/{user}/miniconda3/envs/{user}/bin/python {shlex.quote(name)} > controller.log 2>&1 &"
     )
-    print(Colors.yellow(f"[SSH] Running {name} on Jetson..."))
+    logger.warning(f"[SSH] Running {name} on Jetson...")
     ctrl = ssh_run(user, host, remote_cmd)
     if not ctrl:
-        print(Colors.red("[SSH] SSH Master failed to execute controller run"))
+        logger.error("[SSH] SSH Master failed to execute controller run")
         return (False, "SSH Master failed to execute controller run")
     if ctrl.returncode != 0:
-        print(Colors.red(f"[SSH] Remote run failed:\n{ctrl.stderr}"))
+        logger.error("[SSH] Remote run failed:\n%s", ctrl.stderr)
         return (False, f"Failed to run remote controller: {ctrl.stderr.strip() or ctrl.stdout.strip()}")
-    print(Colors.green(f"[SSH] Flexible controller started successfully"))
+    logger.info("[SSH] Flexible controller started successfully")
     
     # 6. Setup devices
     path = remote_path(user, Remote_Paths.DEVICES)
     remote_cmd = f"sudo -n {shlex.quote(path)}"
-    print(Colors.yellow(f"[SYNC] Setting up devices with {path}"))
+    logger.warning(f"[SYNC] Setting up devices with {path}")
     devices = ssh_bash(user, host, remote_cmd)
     if not devices:
-        print(Colors.red("[SSH] SSH Master failed to execute device setup"))
+        logger.error("[SSH] SSH Master failed to execute device setup")
         return (False, "SSH Master failed to execute device setup")
     if devices.returncode != 0:
-        print(Colors.red(f"[SYNC] Device setup failed:\n{devices.stderr}"))
+        logger.error("[SYNC] Device setup failed:\n%s", devices.stderr)
     else:
-        print(Colors.green(f"[SYNC] Device setup successful"))
+        logger.info("[SYNC] Device setup successful")
     
     # 7. open gui
     gui_url = f"http://{host}:5000/gui"
-    print(Colors.yellow(f"[UI] Opening GUI at {gui_url}"))
+    logger.warning(f"[UI] Opening GUI at {gui_url}")
     time.sleep(1.5)  
     webbrowser.open_new_tab(gui_url)
 
@@ -341,36 +343,35 @@ def stop_remote_controller(name, user, host):
     remote_cmd = f"sudo pkill -15 -f connection_hub.py"
     kill = ssh_run(user, host, remote_cmd)
     if not kill:
-        print(Colors.red("[SSH] SSH Master failed to execute connection hub kill"))
+        logger.error("[SSH] SSH Master failed to execute connection hub kill")
         return (False, "SSH Master failed to execute connection hub kill")
     if kill.returncode != 0:        
-        print(Colors.red(f"[SSH] Failed to stop connection hub:\n{kill.stderr}"))
-    print(Colors.green(f"[SSH] Stopped existing connection hub process (if any)"))
-
+        logger.error("[SSH] Failed to stop connection hub:\n%s", kill.stderr)
+    logger.info("[SSH] Stopped existing connection hub process (if any)")
     # 2. Stop the controller itself
     remote_cmd = f"sudo pkill -15 -f {shlex.quote(normalized)}"
-    print(Colors.yellow(f"\n[SSH] Stopping remote controller: {normalized}"))
+    logger.warning(f"[SSH] Stopping remote controller: {normalized}")
     stop_ctrl = ssh_run(user, host, remote_cmd)
     if not stop_ctrl:
-        print(Colors.red("[SSH] SSH Master failed to execute controller stop"))
+        logger.error("[SSH] SSH Master failed to execute controller stop")
         return (False, "SSH Master failed to execute controller stop")
     if stop_ctrl.returncode != 0:
-        print(Colors.red(f"[SSH] Remote stop failed:\n{stop_ctrl.stderr}"))
+        logger.error("[SSH] Remote stop failed:\n%s", stop_ctrl.stderr)
         return (False, f"Remote stop failed: {stop_ctrl.stderr.strip() or stop_ctrl.stdout.strip()}")
     
     # 3. Setup devices
     path = remote_path(user, Remote_Paths.SETUP_DEVICES)
     remote_cmd = f"sudo -n {shlex.quote(path)}"
-    print(Colors.yellow(f"[SYNC] Setting up devices with {path}"))
+    logger.warning("[SYNC] Setting up devices with %s", path)
 
     devices = ssh_bash(user, host, remote_cmd)
     if not devices:
-        print(Colors.red("[SSH] SSH Master failed to execute device setup"))
+        logger.error("[SSH] SSH Master failed to execute device setup")
         return (False, "SSH Master failed to execute device setup")
     if devices.returncode != 0:
-        print(Colors.red(f"[SYNC] Device setup failed:\n{devices.stderr}"))
+        logger.error("[SYNC] Device setup failed:\n%s", devices.stderr)
     else:
-        print(Colors.green(f"[SYNC] Device setup successful"))
+        logger.info("[SYNC] Device setup successful")
     
-    print(Colors.green(f"[SSH] Remote controller stopped:\n{stop_ctrl.stdout}"))
+    logger.warning("[SSH] Remote controller stopped:\n%s", stop_ctrl.stdout)
     return (True, "Stopped.")

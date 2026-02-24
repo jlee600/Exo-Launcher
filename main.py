@@ -1,14 +1,15 @@
 import sys, platform, signal, webbrowser, time
-from config import Wifi, Colors, Local_Paths, SERVER
+from config import Colors, Wifi, Local_Paths, SERVER
 from util.api import start_static_server, start_api_server
 from util.login import on_login, close_active_master, set_active_ssid
 from util.ssh import run_remote_controller, stop_remote_controller, run_flexible_controller
 from util.wifi import connect_wifi
+from util.log import logger
 
 def main():
     sys_os = platform.system()
     _os = "Mac" if sys_os == "Darwin" else sys_os
-    print(Colors.green(f"Detected OS: {_os}\n"))
+    logger.info("Detected OS: %s", _os)
 
     # wifi
     ssid_used = None
@@ -16,14 +17,14 @@ def main():
     # if connect_wifi(sys_os, Wifi.SSID_OVG, Wifi.PASS_OVG, Wifi.IP_OVG):
     #     ssid_used = Wifi.SSID_OVG
     # else:
-    print(Colors.green("[WIFI] Connecting to Wi-Fi: Caren_5G"))
+    logger.info("[WIFI] Connecting to Wi-Fi: Caren_5G")
     if connect_wifi(sys_os, Wifi.SSID_CAREN, Wifi.PASS_CAREN, Wifi.IP_CAREN):
         ssid_used = Wifi.SSID_CAREN
     else:
         sys.exit(1)
     set_active_ssid(ssid_used)
 
-    print(Colors.green("\n[SSH] Waiting for Jetson login selection...\n"))
+    logger.info("[SSH] Waiting for Jetson login selection...")
 
     # API server (Thread 1)
     api = start_api_server(
@@ -38,23 +39,23 @@ def main():
     # Static server (Thread 2)
     httpd = start_static_server(Local_Paths.ROOT, port=SERVER.POLL_PORT)
     login_url = f"http://127.0.0.1:{SERVER.POLL_PORT}/login.html"
-    print(Colors.yellow(f"[UI] Opening login at {login_url}\n"))
+    logger.info("[UI] Opening login at %s", login_url)
     webbrowser.open(login_url)
 
     # Graceful shutdown closes any active control master
     def _cleanup(*_):
         # TODO: reset meta.json, pkill watchdog
-        print(Colors.yellow("\n[parse] Stopping sync..."))
+        logger.warning("\n[parse] Stopping sync...")
         try:
             close_active_master()
         finally:
             try:
-                print(Colors.yellow("[API] Shutting down API server ..."))
+                logger.warning("[API] Shutting down API server ...")
                 api.shutdown()
             except Exception:
                 pass
             try:
-                print(Colors.yellow("[UI] Shutting down static server "))
+                logger.warning("[UI] Shutting down static server ")
                 httpd.shutdown()
             except Exception:
                 pass
