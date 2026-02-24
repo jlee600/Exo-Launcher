@@ -156,7 +156,7 @@ def periodic_sync(user, host, ssid, interval_sec=3):
             write_json(Local_Paths.OUTPUT, cmp_payload)
             write_json(Local_Paths.META, meta_payload)
             
-            logger.info("[SYNC] Updated successfully")
+            # logger.info("[SYNC] Updated successfully")
         else:
             logger.error("[SYNC] Update failed")
 

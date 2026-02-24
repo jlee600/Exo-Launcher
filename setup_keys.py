@@ -38,7 +38,7 @@ def setup_passwordless_login():
         logger.error("[ERROR] No profiles found in data/jetson_profiles.json")
         return
         
-    logger.info(f"\nFound {len(profiles)} saved profiles. Ready to copy keys.")
+    logger.info("\nFound %d saved profiles. Ready to copy keys.", len(profiles))
     logger.warning("Note: You will be prompted to enter the password for each Jetson one last time.\n")
     
     for name, data in profiles.items():
@@ -46,10 +46,10 @@ def setup_passwordless_login():
         host = data.get("host")
         target = f"{user}@{host}"
         
-        logger.info(f"--- Setting up profile '{name}' ({target}) ---")
+        logger.info("--- Setting up profile '%s' (%s) ---", name, target)
         try:
             subprocess.run(["ssh-copy-id", target])
-            logger.info(f"[SUCCESS] Key copied to {name}!")
+            logger.info("[SUCCESS] Key copied to %s!", name)
         except FileNotFoundError:
             logger.error("[ERROR] 'ssh-copy-id' command not found on this OS.")
         except Exception as e:
