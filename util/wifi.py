@@ -34,7 +34,7 @@ def generate_wifi_xml(ssid, password, filepath):
     xml_content = XML_TEMPLATE.format(ssid=ssid, password=password)
     with open(filepath, "w") as f:
         f.write(xml_content)
-    logger.info("\nGenerated Wi-Fi profile XML: %s", filepath)
+    logger.info("Generated Wi-Fi profile XML: %s", filepath)
     return filepath
 
 def validate_ip_mac(ssid, expected_ip):

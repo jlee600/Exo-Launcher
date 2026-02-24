@@ -45,7 +45,7 @@ def main():
     # Graceful shutdown closes any active control master
     def _cleanup(*_):
         # TODO: reset meta.json, pkill watchdog
-        logger.warning("\n[parse] Stopping sync ")
+        logger.warning("[parse] Stopping sync ")
         try:
             close_active_master()
         finally:
