@@ -1,4 +1,4 @@
-import os, socket, json, time, datetime, re, shlex
+import os, socket, json, time, datetime, re, shlex, webbrowser
 from config import Remote_Paths, Colors, Local_Paths
 from util.utils import run, write_json, write_dashboard_info, write_flexible_config
 
@@ -205,7 +205,7 @@ def run_remote_controller(name, user, host):
         "source ~/miniconda3/etc/profile.d/conda.sh && "
         f"conda activate /home/{user}/miniconda3/envs/{user} && "
         f"cd {shlex.quote(remote_path(user, Remote_Paths.CONTROLLERS))} && "
-        f"/home/{user}/miniconda3/envs/{user}/bin/python {shlex.quote(normalized)}"
+        f"nohup /home/{user}/miniconda3/envs/{user}/bin/python {shlex.quote(normalized)} > controller.log 2>&1 &"
     )
     print(Colors.yellow(f"[SSH] Running {name} on Jetson..."))
     ctrl = ssh_run(user, host, remote_cmd)
@@ -229,6 +229,12 @@ def run_remote_controller(name, user, host):
         print(Colors.red(f"[SYNC] Device setup failed:\n{devices.stderr}"))
     else:
         print(Colors.green(f"[SYNC] Device setup successful"))
+
+    # 4. open gui
+    gui_url = f"http://{host}:5000/gui"
+    print(Colors.yellow(f"[UI] Opening GUI at {gui_url}"))
+    time.sleep(1.5)  
+    webbrowser.open_new_tab(gui_url)
 
     return (True, "Remote controller started successfully")
 
@@ -288,7 +294,7 @@ def run_flexible_controller(name, config, user, host):
         "source ~/miniconda3/etc/profile.d/conda.sh && "
         f"conda activate /home/{user}/miniconda3/envs/{user} && "
         f"cd {shlex.quote(path)} && "
-        f"/home/{user}/miniconda3/envs/{user}/bin/python {shlex.quote(name)}"
+        f"nohup /home/{user}/miniconda3/envs/{user}/bin/python {shlex.quote(name)} > controller.log 2>&1 &"
     )
     print(Colors.yellow(f"[SSH] Running {name} on Jetson..."))
     ctrl = ssh_run(user, host, remote_cmd)
@@ -312,6 +318,12 @@ def run_flexible_controller(name, config, user, host):
         print(Colors.red(f"[SYNC] Device setup failed:\n{devices.stderr}"))
     else:
         print(Colors.green(f"[SYNC] Device setup successful"))
+    
+    # 7. open gui
+    gui_url = f"http://{host}:5000/gui"
+    print(Colors.yellow(f"[UI] Opening GUI at {gui_url}"))
+    time.sleep(1.5)  
+    webbrowser.open_new_tab(gui_url)
 
     return (True, "Flexible controller started successfully")
 
