@@ -122,6 +122,13 @@
   tr:last-child td { border-bottom: none; }
   th { color: var(--muted); font-weight: 600; }
   .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; background: var(--gray-100); color: var(--muted); }
+  .sidebar-logo {
+    width: 100%; 
+    height: auto;
+    max-height: none; 
+    object-fit: cover;
+    display: block;
+  }
   
   /* toasts: centered below header */
   #toast-root {

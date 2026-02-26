@@ -1,4 +1,4 @@
-import os, socket, json, time, datetime, re, shlex, webbrowser
+import os, socket, json, time, re, shlex, webbrowser
 from config import Remote_Paths, Colors, Local_Paths
 from util.utils import run, write_json, write_dashboard_info, write_flexible_config
 from util.log import logger
@@ -204,7 +204,7 @@ def run_remote_controller(name, user, host):
         "source ~/miniconda3/etc/profile.d/conda.sh && "
         f"conda activate /home/{user}/miniconda3/envs/{user} && "
         f"cd {shlex.quote(remote_path(user, Remote_Paths.CONTROLLERS))} && "
-        f"nohup /home/{user}/miniconda3/envs/{user}/bin/python {shlex.quote(normalized)} > controller.log 2>&1 &"
+        f"nohup /home/{user}/miniconda3/envs/{user}/bin/python {shlex.quote(normalized)} > controller.log 2>&1 < /dev/null &"
     )
     logger.warning("[SSH] Running %s on Jetson...", name)
     ctrl = ssh_run(user, host, remote_cmd)
@@ -230,9 +230,9 @@ def run_remote_controller(name, user, host):
         logger.info("[SYNC] Device setup successful")
 
     # 4. open gui
-    gui_url = f"http://{host}:5000/gui"
+    gui_url = f"http://{host}:5000/connect"
     logger.warning("[UI] Opening GUI at %s", gui_url)
-    time.sleep(1.5)  
+    # time.sleep(1.5)  
     webbrowser.open_new_tab(gui_url)
 
     return (True, "Remote controller started successfully")
@@ -294,7 +294,7 @@ def run_flexible_controller(name, config, user, host):
         "source ~/miniconda3/etc/profile.d/conda.sh && "
         f"conda activate /home/{user}/miniconda3/envs/{user} && "
         f"cd {shlex.quote(path)} && "
-        f"nohup /home/{user}/miniconda3/envs/{user}/bin/python {shlex.quote(name)} > controller.log 2>&1 &"
+        f"nohup /home/{user}/miniconda3/envs/{user}/bin/python {shlex.quote(name)} > controller.log 2>&1 < /dev/null &"
     )
     logger.warning("[SSH] Running %s on Jetson...", name)
     ctrl = ssh_run(user, host, remote_cmd)
@@ -320,9 +320,9 @@ def run_flexible_controller(name, config, user, host):
         logger.info("[SYNC] Device setup successful")
     
     # 7. open gui
-    gui_url = f"http://{host}:5000/gui"
+    gui_url = f"http://{host}:5000/connect"
     logger.warning("[UI] Opening GUI at %s", gui_url)
-    time.sleep(1.5)  
+    # time.sleep(1.5)  
     webbrowser.open_new_tab(gui_url)
 
     return (True, "Flexible controller started successfully")
@@ -346,7 +346,8 @@ def stop_remote_controller(name, user, host):
     if kill.returncode != 0:        
         logger.error("[SSH] Failed to stop connection hub:\n%s", kill.stderr)
     logger.info("[SSH] Stopped existing connection hub process (if any)")
-    # 2. Stop the controller itself
+    
+    # 2. Stop the controller
     remote_cmd = f"sudo pkill -15 -f {shlex.quote(normalized)}"
     logger.warning("[SSH] Stopping remote controller: %s", normalized)
     stop_ctrl = ssh_run(user, host, remote_cmd)

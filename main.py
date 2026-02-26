@@ -24,7 +24,7 @@ def main():
         sys.exit(1)
     set_active_ssid(ssid_used)
 
-    logger.info("[SSH] Waiting for Jetson login selection...")
+    logger.info("[SSH] Waiting for Jetson login selection ")
 
     # API server (Thread 1)
     api = start_api_server(
@@ -44,8 +44,7 @@ def main():
 
     # Graceful shutdown closes any active control master
     def _cleanup(*_):
-        # TODO: reset meta.json, pkill watchdog
-        logger.warning("[parse] Stopping sync ")
+        logger.warning("Stopping sync ")
         try:
             close_active_master()
         finally:

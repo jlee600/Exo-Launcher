@@ -5,12 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>EPIC Controller Dashboard</title>
 
-  <!-- External stylesheet -->
   <link rel="stylesheet" href="./assets/dashboard.css">
 </head>
 
 <body>
-  <!-- HEADER -->
   <header>
     <div>
       <h1>EPIC Controller Dashboard</h1>
@@ -26,14 +24,13 @@
     </div>
   </header>
 
-  <!-- MAIN LAYOUT -->
   <div class="main-layout">
-    <!-- LEFT: Controller Grid -->
     <main id="grid" class="grid"></main>
-
-    <!-- RIGHT: Sidebar -->
     <aside>
-      <!-- Sensors Section -->
+      <div class="logo-box">
+        <img src="./assets/epic_logo.png" alt="EPIC Logo" class="sidebar-logo" />
+      </div>
+
       <div class="section">
         <h3>SENSORS</h3>
         <table id="sensor-table">
@@ -48,7 +45,6 @@
         </table>
       </div>
 
-      <!-- Actuators Section -->
       <div class="section">
         <h3>ACTUATORS</h3>
         <table id="motor-table">
@@ -62,7 +58,6 @@
         </table>
       </div>
 
-      <!-- Summary Section -->
       <div class="section">
         <h3>SUMMARY</h3>
         <table>
@@ -89,22 +84,19 @@
     </aside>
   </div>
 
-  <!-- TOAST ROOT (centered below header) -->
   <div id="toast-root" aria-live="polite" aria-atomic="true"></div>
 
-  <!-- Confirm modal -->
   <div id="confirm" hidden>
     <div class="confirm-box">
       <h3 id="confirm-title" class="confirm-title">Run controller</h3>
       <p id="confirm-msg" class="confirm-msg">Run “…” on the Jetson now?</p>
       <div class="confirm-actions">
-        <button id="confirm-cancel" class="btn">Cancel</button>
+        <button id="confirm-cancel" class="btn btn-ghost">Cancel</button>
         <button id="confirm-ok" class="btn btn-run">Run</button>
       </div>
     </div>
   </div>
 
-  <!-- Flexible config modal -->
   <div id="flex-modal" hidden>
     <div class="flex-box">
       <h3 class="flex-title">Flexible Controller - Devices</h3>
@@ -161,13 +153,12 @@
       </label>
   
       <div class="flex-actions">
-        <button id="flex-cancel" class="btn btn-secondary">Cancel</button>
+        <button id="flex-cancel" class="btn btn-ghost">Cancel</button>
         <button id="flex-ok" class="btn btn-primary">Run</button>
       </div>
     </div>
   </div>
 
-  <!-- External JavaScript -->
   <script defer src="./assets/dashboard.js"></script>
 </body>
 </html>
