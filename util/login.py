@@ -32,7 +32,7 @@ def on_login(profile_name, user, host):
     write_dashboard_info(user, ssid, host)
 
     if _sync_thread is None or not _sync_thread.is_alive():
-        _sync_thread = threading.Thread(target=periodic_sync, args=(user, host, Wifi.SSID_CAREN, 4), daemon=True)
+        _sync_thread = threading.Thread(target=periodic_sync, args=(user, host, ssid, 4), daemon=True)
         _sync_thread.start()
 
 def get_active_connection():

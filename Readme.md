@@ -14,7 +14,8 @@ EXO-LAUNCHER/
 ├── util/                 # Wi-Fi, SSH, API, profile helpers
 ├── login.html
 ├── dashboard.html
-├── launch.py             # entry point
+├── main.py               # entry point
+├── setup_keys.py         # Authroize ssh w/o password
 └── config.py             # Centralized configuration
 ```
 
@@ -63,7 +64,6 @@ The login page opens automatically in the browser.
 The login UI supports:
 - Selecting saved profiles  
 - Creating new profiles  
-- Testing SSH reachability  
 - Saving credentials locally  
 
 Profiles are stored in:
