@@ -1,4 +1,4 @@
-import os, socket, json, time, re, shlex, webbrowser
+import os, socket, json, time, re, shlex, webbrowser, subprocess
 from config import Remote_Paths, Colors, Local_Paths
 from util.utils import run, write_json, write_dashboard_info, write_flexible_config
 from util.log import logger
@@ -61,6 +61,35 @@ def ssh_run(user, host, cmd):
         f"{user}@{host}",
         cmd
     ])
+
+def ssh_launch_controller(user, host, cmd, timeout=4.0):
+    # spawns the SSH command asynchronously and waits to see if it crashes 
+    if not ensure_master(user, host):
+        return False, "SSH control master not available"
+    
+    cp = control_path(user, host)
+    # Use Popen to spawn asynchronously without blocking the main thread
+    proc = subprocess.Popen([
+        "ssh",
+        "-o", "ControlMaster=auto",
+        "-o", f"ControlPath={cp}",
+        "-o", "StrictHostKeyChecking=accept-new",
+        f"{user}@{host}",
+        cmd
+    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    
+    try:
+        # Wait for a few seconds to catch immediate crashes
+        proc.wait(timeout=timeout)
+        err = proc.stderr.read().strip()
+        out = proc.stdout.read().strip()
+        if proc.returncode != 0:
+            return False, f"Crashed immediately:\n{err or out}"
+        else:
+            return False, f"Script exited unexpectedly fast.\n{out}"
+            
+    except subprocess.TimeoutExpired:
+        return True, "Controller is running stably."
 
 def ssh_bash(user, host, bash_cmd):
     return ssh_run(user, host, f"bash -lc {shlex.quote(bash_cmd)}")
@@ -207,14 +236,11 @@ def run_remote_controller(name, user, host):
         f"nohup /home/{user}/miniconda3/envs/{user}/bin/python {shlex.quote(normalized)} > controller.log 2>&1 < /dev/null &"
     )
     logger.warning("[SSH] Running %s on Jetson...", name)
-    ctrl = ssh_run(user, host, remote_cmd)
-    if not ctrl:
-        logger.error("[SSH] SSH Master failed to execute controller run")
-        return (False, "SSH Master failed to execute controller run")
-    if ctrl.returncode != 0:
-        logger.error("[SSH] Remote run failed:\n%s", ctrl.stderr)
-        return (False, f"Failed to run remote controller: {ctrl.stderr.strip() or ctrl.stdout.strip()}")
-    logger.info("[SSH] Flexible controller started successfully")
+    ok, msg = ssh_launch_controller(user, host, remote_cmd, timeout=4.0)
+    if not ok:
+        logger.error("[SSH] Remote run failed:\n%s", msg)
+        return (False, msg)
+    logger.info("[SSH] Controller started successfully")
     
     # 3. remote call devices.sh    
     device = remote_path(user, Remote_Paths.DEVICES)
@@ -297,13 +323,10 @@ def run_flexible_controller(name, config, user, host):
         f"nohup /home/{user}/miniconda3/envs/{user}/bin/python {shlex.quote(name)} > controller.log 2>&1 < /dev/null &"
     )
     logger.warning("[SSH] Running %s on Jetson...", name)
-    ctrl = ssh_run(user, host, remote_cmd)
-    if not ctrl:
-        logger.error("[SSH] SSH Master failed to execute controller run")
-        return (False, "SSH Master failed to execute controller run")
-    if ctrl.returncode != 0:
-        logger.error("[SSH] Remote run failed:\n%s", ctrl.stderr)
-        return (False, f"Failed to run remote controller: {ctrl.stderr.strip() or ctrl.stdout.strip()}")
+    ok, msg = ssh_launch_controller(user, host, remote_cmd, timeout=4.0)
+    if not ok:
+        logger.error("[SSH] Remote run failed:\n%s", msg)
+        return (False, msg)
     logger.info("[SSH] Flexible controller started successfully")
     
     # 6. Setup devices
