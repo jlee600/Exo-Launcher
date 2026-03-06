@@ -26,8 +26,8 @@ def write_dashboard_info(user, ssid, host):
 def write_flexible_config(config):
     try:
         write_json(Local_Paths.FLEX, config)
-        logger.info("\n[INFO] Flexible config written to %s\n", Local_Paths.FLEX)
+        logger.info("Flexible config written to %s\n", Local_Paths.FLEX)
         return True
     except Exception as e:
-        logger.error("\n[ERROR] Failed to write flexible config: %s\n", e)
+        logger.error("Failed to write flexible config: %s\n", e)
         return False

@@ -86,8 +86,7 @@ def ssh_launch_controller(user, host, cmd, timeout=4.0):
         if proc.returncode != 0:
             return False, f"Crashed immediately:\n{err or out}"
         else:
-            return False, f"Script exited unexpectedly fast.\n{out}"
-            
+            return True, "Controller backgrounded successfully."
     except subprocess.TimeoutExpired:
         return True, "Controller is running stably."
 
@@ -258,7 +257,8 @@ def run_remote_controller(name, user, host):
     # 4. open gui
     gui_url = f"http://{host}:5000/connect"
     logger.warning("[UI] Opening GUI at %s", gui_url)
-    # time.sleep(1.5)  
+    logger.info("You could check the controller log at %scontroller.log", Remote_Paths.CONTROLLERS)
+    time.sleep(8)
     webbrowser.open_new_tab(gui_url)
 
     return (True, "Remote controller started successfully")
@@ -314,7 +314,28 @@ def run_flexible_controller(name, config, user, host):
         return (False, f"Failed to kill watchdog process: {pkill.stderr.strip() or pkill.stdout.strip()}")
     logger.info("[SSH] Stopped existing watchdog process (if any)")
 
-    # 5. Run the controller
+    # 5. Launch xsensor-producer if Xsensors enabled in config
+    if config.get("Xsensors"):
+        logger.warning("[SSH] Xsensors enabled. Launching xsensor-producer...")
+        
+        # Kill any existing instance
+        remote_cmd = "sudo pkill -15 -f xsensor-producer"
+        ssh_run(user, host, remote_cmd)
+        inner_xsens_cmd = (
+            "source ~/miniconda3/etc/profile.d/conda.sh && "
+            f"conda activate /home/{user}/miniconda3/envs/{user} && "
+            "nohup xsensor-producer > xsensor.log 2>&1 < /dev/null &"
+        )
+        remote_xsens_cmd = f"bash -ic {shlex.quote(inner_xsens_cmd)}"
+        x_ok, x_msg = ssh_launch_controller(user, host, remote_xsens_cmd, timeout=2.0)
+        if not x_ok:
+            logger.error("[SSH] Failed to launch xsensor-producer:\n%s", x_msg)
+            return (False, f"Failed to launch xsensor-producer: {x_msg}")
+        else:
+            logger.info("[SSH] xsensor-producer launched successfully")
+            time.sleep(2)
+
+    # 6. Run the controller
     path = remote_path(user, Remote_Paths.CONTROLLERS)
     remote_cmd = (
         "source ~/miniconda3/etc/profile.d/conda.sh && "
@@ -329,7 +350,7 @@ def run_flexible_controller(name, config, user, host):
         return (False, msg)
     logger.info("[SSH] Flexible controller started successfully")
     
-    # 6. Setup devices
+    # 7. Setup devices
     path = remote_path(user, Remote_Paths.DEVICES)
     remote_cmd = f"sudo -n {shlex.quote(path)}"
     logger.warning("[SYNC] Setting up devices with %s", path)
@@ -342,10 +363,11 @@ def run_flexible_controller(name, config, user, host):
     else:
         logger.info("[SYNC] Device setup successful")
     
-    # 7. open gui
+    # 8. open gui
     gui_url = f"http://{host}:5000/connect"
     logger.warning("[UI] Opening GUI at %s", gui_url)
-    # time.sleep(1.5)  
+    logger.info("You could check the controller log at %scontroller.log", Remote_Paths.CONTROLLERS)
+    time.sleep(8)
     webbrowser.open_new_tab(gui_url)
 
     return (True, "Flexible controller started successfully")
@@ -381,7 +403,11 @@ def stop_remote_controller(name, user, host):
         logger.error("[SSH] Remote stop failed:\n%s", stop_ctrl.stderr)
         return (False, f"Remote stop failed: {stop_ctrl.stderr.strip() or stop_ctrl.stdout.strip()}")
     
-    # 3. Setup devices
+    # 3. Kill xsensor-producer just in case
+    remote_cmd = "sudo pkill -15 -f xsensor-producer"
+    ssh_run(user, host, remote_cmd)
+    
+    # 4. Setup devices
     path = remote_path(user, Remote_Paths.SETUP_DEVICES)
     remote_cmd = f"sudo -n {shlex.quote(path)}"
     logger.warning("[SYNC] Setting up devices with %s", path)

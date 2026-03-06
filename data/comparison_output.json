@@ -23,7 +23,9 @@
         "IMU:right.shank=id_missing(req:156124)",
         "IMU:left.thigh=id_missing(req:156125)",
         "IMU:left.shank=id_missing(req:156122)",
-        "Xsensors=required_but_unavailable"
+        "Xsensors=required_but_unavailable",
+        "Motor:right.hip=id_missing(req:4)",
+        "Motor:left.hip=id_missing(req:2)"
       ]
     },
     "exo_controller_daniel_debug.py": {
@@ -34,7 +36,9 @@
         "IMU:right.shank=id_missing(req:156124)",
         "IMU:left.thigh=id_missing(req:156125)",
         "IMU:left.shank=id_missing(req:156122)",
-        "Xsensors=required_but_unavailable"
+        "Xsensors=required_but_unavailable",
+        "Motor:right.hip=id_missing(req:4)",
+        "Motor:left.hip=id_missing(req:2)"
       ]
     },
     "hike_controller.py": {
@@ -55,18 +59,26 @@
     "hip_controller_COMBINED.py": {
       "status": 0,
       "missing": [
+        "IMU:pelvis=id_missing(req:154135)",
         "IMU:left.thigh=id_missing(req:156123)",
-        "Xsensors=required_but_unavailable"
+        "Xsensors=required_but_unavailable",
+        "Motor:right.hip=id_missing(req:4)",
+        "Motor:left.hip=id_missing(req:2)"
       ]
     },
     "hip_controller_COMBINED_flexible_devices.py": {
-      "status": 1,
-      "missing": []
+      "status": 0,
+      "missing": [
+        "Motors=count_insufficient(req:2, got:0)"
+      ]
     },
     "hip_controller_COMBINED_noinsole.py": {
       "status": 0,
       "missing": [
-        "IMU:left.thigh=id_missing(req:156123)"
+        "IMU:pelvis=id_missing(req:154135)",
+        "IMU:left.thigh=id_missing(req:156123)",
+        "Motor:right.hip=id_missing(req:4)",
+        "Motor:left.hip=id_missing(req:2)"
       ]
     },
     "hip_controller_COMBINED_noinsole_BO.py": {
@@ -76,7 +88,9 @@
         "IMU:right.thigh=id_missing(req:154140)",
         "IMU:right.shank=id_missing(req:156124)",
         "IMU:left.thigh=id_missing(req:156125)",
-        "IMU:left.shank=id_missing(req:156122)"
+        "IMU:left.shank=id_missing(req:156122)",
+        "Motor:right.hip=id_missing(req:4)",
+        "Motor:left.hip=id_missing(req:2)"
       ]
     },
     "hip_controller_COMBINED_noinsole_BO_v2.py": {
@@ -86,7 +100,9 @@
         "IMU:right.thigh=id_missing(req:154140)",
         "IMU:right.shank=id_missing(req:156124)",
         "IMU:left.thigh=id_missing(req:156125)",
-        "IMU:left.shank=id_missing(req:156122)"
+        "IMU:left.shank=id_missing(req:156122)",
+        "Motor:right.hip=id_missing(req:4)",
+        "Motor:left.hip=id_missing(req:2)"
       ]
     },
     "hip_controller_COMBINED_noinsole_BO_v3.py": {
@@ -95,31 +111,47 @@
         "IMU:pelvis=id_missing(req:154141)",
         "IMU:right.thigh=id_missing(req:154140)",
         "IMU:left.thigh=id_missing(req:193830)",
-        "IMU:left.shank=id_missing(req:156122)"
+        "IMU:left.shank=id_missing(req:156122)",
+        "Motor:right.hip=id_missing(req:4)",
+        "Motor:left.hip=id_missing(req:2)"
       ]
     },
     "hip_controller_COMBINED_noinsole_BO_v4.py": {
-      "status": 1,
-      "missing": []
+      "status": 0,
+      "missing": [
+        "IMU:pelvis=id_missing(req:154135)",
+        "Motor:right.hip=id_missing(req:4)",
+        "Motor:left.hip=id_missing(req:2)"
+      ]
     },
     "hip_controller_COMBINED_noinsole_BO_v5.py": {
-      "status": 1,
-      "missing": []
+      "status": 0,
+      "missing": [
+        "IMU:pelvis=id_missing(req:154135)",
+        "Motor:right.hip=id_missing(req:4)",
+        "Motor:left.hip=id_missing(req:2)"
+      ]
     },
     "hip_controller_COMBINED_noinsole_BO_v6.py": {
       "status": 0,
       "missing": [
+        "IMU:pelvis=id_missing(req:154135)",
         "IMU:left.thigh=id_missing(req:193821)",
-        "IMU:left.shank=id_missing(req:134959)"
+        "IMU:left.shank=id_missing(req:134959)",
+        "Motor:right.hip=id_missing(req:4)",
+        "Motor:left.hip=id_missing(req:2)"
       ]
     },
     "hip_controller_COMBINED_noinsole_BO_v7.py": {
       "status": 0,
       "missing": [
+        "IMU:pelvis=id_missing(req:154135)",
         "IMU:right.thigh=id_missing(req:154140)",
         "IMU:right.shank=id_missing(req:156124)",
         "IMU:left.thigh=id_missing(req:193830)",
-        "IMU:left.shank=id_missing(req:193820)"
+        "IMU:left.shank=id_missing(req:193820)",
+        "Motor:right.hip=id_missing(req:4)",
+        "Motor:left.hip=id_missing(req:2)"
       ]
     },
     "hip_controller_KEYA.py": {
@@ -129,7 +161,9 @@
         "IMU:right.thigh=id_missing(req:154140)",
         "IMU:right.shank=id_missing(req:156124)",
         "IMU:left.thigh=id_missing(req:156125)",
-        "IMU:left.shank=id_missing(req:156122)"
+        "IMU:left.shank=id_missing(req:156122)",
+        "Motor:right.hip=id_missing(req:4)",
+        "Motor:left.hip=id_missing(req:2)"
       ]
     },
     "hip_controller_KEYA_new.py": {
@@ -139,7 +173,9 @@
         "IMU:right.thigh=id_missing(req:154140)",
         "IMU:right.shank=id_missing(req:156124)",
         "IMU:left.thigh=id_missing(req:156125)",
-        "IMU:left.shank=id_missing(req:156122)"
+        "IMU:left.shank=id_missing(req:156122)",
+        "Motor:right.hip=id_missing(req:4)",
+        "Motor:left.hip=id_missing(req:2)"
       ]
     },
     "hip_controller_noback-xs.py": {
@@ -149,7 +185,9 @@
         "IMU:right.thigh=id_missing(req:154140)",
         "IMU:right.shank=id_missing(req:156124)",
         "IMU:left.thigh=id_missing(req:156125)",
-        "IMU:left.shank=id_missing(req:156122)"
+        "IMU:left.shank=id_missing(req:156122)",
+        "Motor:right.hip=id_missing(req:4)",
+        "Motor:left.hip=id_missing(req:2)"
       ]
     },
     "hip_controller_noback.py": {
@@ -160,7 +198,9 @@
         "IMU:right.shank=id_missing(req:156124)",
         "IMU:left.thigh=id_missing(req:156125)",
         "IMU:left.shank=id_missing(req:156122)",
-        "Xsensors=required_but_unavailable"
+        "Xsensors=required_but_unavailable",
+        "Motor:right.hip=id_missing(req:4)",
+        "Motor:left.hip=id_missing(req:2)"
       ]
     },
     "model_comparison_controller.py": {
@@ -186,13 +226,15 @@
         "IMU:right.shank=id_missing(req:156124)",
         "IMU:left.thigh=id_missing(req:156125)",
         "IMU:left.shank=id_missing(req:156122)",
-        "Xsensors=required_but_unavailable"
+        "Xsensors=required_but_unavailable",
+        "Motor:right.hip=id_missing(req:4)",
+        "Motor:left.hip=id_missing(req:2)"
       ]
     }
   },
   "summary": {
-    "ready": 3,
-    "blocked": 17,
+    "ready": 0,
+    "blocked": 20,
     "unknown": 0
   }
 }
