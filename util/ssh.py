@@ -316,24 +316,25 @@ def run_flexible_controller(name, config, user, host):
 
     # 5. Launch xsensor-producer if Xsensors enabled in config
     if config.get("Xsensors"):
-        logger.warning("[SSH] Xsensors enabled. Launching xsensor-producer...")
+        logger.warning("[SSH] Xsensors enabled. Launching xscore-producer...")
         
         # Kill any existing instance
-        remote_cmd = "sudo pkill -15 -f xsensor-producer"
+        remote_cmd = "sudo pkill -15 -f producer.py"
         ssh_run(user, host, remote_cmd)
         inner_xsens_cmd = (
             "source ~/miniconda3/etc/profile.d/conda.sh && "
             f"conda activate /home/{user}/miniconda3/envs/{user} && "
-            "nohup xsensor-producer > xsensor.log 2>&1 < /dev/null &"
+            "python xscore/xscore_driver/xscore_driver/producer.py > /dev/null 2>&1 < /dev/null &"
         )
         remote_xsens_cmd = f"bash -ic {shlex.quote(inner_xsens_cmd)}"
-        x_ok, x_msg = ssh_launch_controller(user, host, remote_xsens_cmd, timeout=2.0)
+        x_ok, x_msg = ssh_launch_controller(user, host, remote_xsens_cmd, timeout=4.0)
+        time.sleep(8)
         if not x_ok:
-            logger.error("[SSH] Failed to launch xsensor-producer:\n%s", x_msg)
-            return (False, f"Failed to launch xsensor-producer: {x_msg}")
+            logger.error("[SSH] Failed to launch xscore-producer:\n%s", x_msg)
+            return (False, f"Failed to launch xscore-producer: {x_msg}")
         else:
             logger.info("[SSH] xsensor-producer launched successfully")
-            time.sleep(2)
+            # time.sleep(10)
 
     # 6. Run the controller
     path = remote_path(user, Remote_Paths.CONTROLLERS)
@@ -404,7 +405,8 @@ def stop_remote_controller(name, user, host):
         return (False, f"Remote stop failed: {stop_ctrl.stderr.strip() or stop_ctrl.stdout.strip()}")
     
     # 3. Kill xsensor-producer just in case
-    remote_cmd = "sudo pkill -15 -f xsensor-producer"
+    logger.warning("[SSH] Killing Xsensor (if any)")
+    remote_cmd = "sudo pkill -15 -f producer.py"
     ssh_run(user, host, remote_cmd)
     
     # 4. Setup devices
