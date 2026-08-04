@@ -6,10 +6,9 @@
 - The tool provides a unified workflow for operating remote NVIDIA Jetson-based hip-exo controllers by combining automated Wi-Fi orchestration, SSH ControlMaster session management, profile handling, and real-time telemetry visualization. 
 - By consolidating these steps into a single interface, the launcher removes the need for manual SSH commands, repeated authentication, and ad-hoc file transfers, enabling fast, reliable, and reproducible controller execution across the lab’s hardware.
 
-## Demo
-[Watch the Exo-Launcher Demo](https://drive.google.com/file/d/1z8qjESxBAihDMLUz-QqMpX2SgDbUViiQ/view?usp=sharing)
+## Demo Video
 
-See Exo-Launcher connect to an NVIDIA Jetson, launch exoskeleton controllers, and monitor the system through the dashboard.
+[![Watch Demo](https://img.shields.io/badge/Watch_Demo-YouTube-red?logo=youtube&logoColor=white)](https://www.youtube.com/watch?v=DgRfzM1G72I)
 
 ## File Structure
 ```
